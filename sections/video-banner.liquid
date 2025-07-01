@@ -256,7 +256,8 @@ document.addEventListener('DOMContentLoaded', function() {
         hls: {
           enableLowInitialPlaylist: true,
           smoothQualityChange: true,
-          overrideNative: true
+          overrideNative: true,
+          withCredentials: false
         }
       }
     });
@@ -267,6 +268,31 @@ document.addEventListener('DOMContentLoaded', function() {
       if (player.muted()) {
         player.muted(false);
         player.controls(true);
+      }
+    });
+
+    // Handle player errors
+    player.on('error', function() {
+      const error = player.error();
+      console.error('Video player error:', error);
+      
+      // Try to recover from certain HLS errors
+      if (error && error.code === 4) {
+        console.log('Media error detected, attempting to reload...');
+        setTimeout(() => {
+          if (currentVideoData && currentVideoData.content && currentVideoData.content.src) {
+            console.log('Reloading video source...');
+            player.load();
+          }
+        }, 2000);
+      }
+    });
+
+    // Log when HLS is loaded
+    player.on('loadedmetadata', function() {
+      const tech = player.tech();
+      if (tech && tech.hls) {
+        console.log('HLS stream loaded successfully');
       }
     });
 
@@ -376,9 +402,53 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update video source
     if (content && content.src) {
-      player.src({
-        src: content.src,
-        type: content.type || 'video/mp4'
+      // Map HLS content types properly
+      let contentType = content.type || 'video/mp4';
+      if (contentType === 'video/hls' || contentType === 'application/x-mpegURL') {
+        contentType = 'application/x-mpegURL';
+      }
+      
+      // For HLS content, disable loop on the player element
+      const isHLS = contentType === 'application/x-mpegURL';
+      
+      if (isHLS) {
+        player.loop(false);
+      } else {
+        player.loop(true);
+      }
+      
+      // Wait for player to be ready before setting source
+      player.ready(() => {
+        console.log(`Loading ${isHLS ? 'HLS' : 'standard'} video:`, content.src, `(${contentType})`);
+        
+        player.src({
+          src: content.src,
+          type: contentType
+        });
+        
+        // Reset mute state and controls for new content if user hasn't interacted
+        if (!userInteracted) {
+          player.muted(true);
+          player.controls(false);
+        }
+        
+        // For HLS, wait a bit longer before starting playback
+        if (isHLS) {
+          setTimeout(() => {
+            if (!userInteracted) {
+              player.play().catch(error => {
+                console.log('Auto-play prevented:', error);
+              });
+            }
+          }, 1000);
+        } else {
+          // For non-HLS content, start immediately
+          if (!userInteracted) {
+            player.play().catch(error => {
+              console.log('Auto-play prevented:', error);
+            });
+          }
+        }
       });
     }
 
@@ -402,12 +472,6 @@ document.addEventListener('DOMContentLoaded', function() {
       <span class="duration">${formattedDuration}</span>
       <span class="provider">${providerValue}</span>
     `;
-
-    // Reset mute state for new content if user hasn't interacted
-    if (!userInteracted) {
-      player.muted(true);
-      player.controls(false);
-    }
 
     // Update Add to My Stuff button state
     updateMyStuffButtonState();
@@ -587,7 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
       "id": "api_url",
       "label": "API URL",
       "default": "https://winoapi.replit.app/?random=true",
-      "info": "URL to fetch video content from"
+      "info": "URL to fetch video content from. Supports MP4, HLS (video/hls, application/x-mpegURL), and other Video.js compatible formats."
     },
     {
       "type": "checkbox",

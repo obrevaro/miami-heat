@@ -5,6 +5,56 @@
   overflow: hidden;
 }
 
+.video-banner .video-js {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.video-banner .video-js .vjs-tech {
+  object-fit: cover;
+}
+
+/* HLS specific styles */
+.video-banner .video-js.vjs-hls {
+  /* Additional styles for HLS content */
+}
+
+/* Loading state for HLS */
+.video-banner .video-js .vjs-loading-spinner {
+  display: block;
+}
+
+/* Error state styling */
+.video-banner .video-js .vjs-error-display {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Control bar styling for HLS */
+.video-banner .video-js .vjs-control-bar {
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+}
+
+/* Big play button styling */
+.video-banner .video-js .vjs-big-play-button {
+  background: rgba(0, 0, 0, 0.8);
+  border: none;
+  border-radius: 50%;
+  font-size: 2rem;
+  line-height: 2;
+  width: 4rem;
+  height: 4rem;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.video-banner .video-js .vjs-big-play-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
 /* Video.js customizations */
 .video-banner .video-js {
   outline: none;
