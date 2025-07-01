@@ -17,6 +17,47 @@
         "padding_bottom": 28
       }
     },
+    "video_banner_Ar8XEV": {
+      "type": "video-banner",
+      "name": "Video Banner",
+      "settings": {
+        "api_url": "https://winoapi.replit.app/?random=true",
+        "refresh_interval": 30,
+        "video_height": 45,
+        "mobile_video_height": 40,
+        "container_margin_top": 0,
+        "container_margin_bottom": 0,
+        "container_margin_left": 0,
+        "container_margin_right": 0,
+        "container_padding_top": 0,
+        "container_padding_bottom": 0,
+        "container_padding_left": 0,
+        "container_padding_right": 0,
+        "text_position": "bottom",
+        "text_margin_top": 0,
+        "text_margin_bottom": 0,
+        "text_margin_left": 0,
+        "text_margin_right": 0,
+        "text_padding_top": 30,
+        "text_padding_bottom": 30,
+        "text_padding_left": 30,
+        "text_padding_right": 30,
+        "title_font_size": 48,
+        "title_font_weight": "700",
+        "title_color": "#FFFFFF",
+        "summary_font_size": 19,
+        "summary_color": "#FFFFFF",
+        "summary_max_width": 60,
+        "text_color": "#FFFFFF",
+        "title_data_source": "title",
+        "summary_data_source": "summary",
+        "category_data_source": "extensions.category",
+        "duration_data_source": "extensions.duration",
+        "provider_data_source": "extensions.provider",
+        "show_play_button": true,
+        "show_add_button": true
+      }
+    },
     "my_stuff_qRDAPR": {
       "type": "my-stuff",
       "name": "My Stuff",
@@ -28,7 +69,7 @@
         "container_padding": 20,
         "title_font_size": 32,
         "title_font_weight": "600",
-        "title_color": "#FFFFFF",
+        "title_color": "#ffffff",
         "title_alignment": "left",
         "title_margin_bottom": 20,
         "item_width": 200,
@@ -40,14 +81,15 @@
         "item_meta_size": 12,
         "empty_title": "Your collection is empty",
         "empty_message": "Start adding videos to your collection by clicking the 'Add to My Stuff' button on videos you want to save.",
-        "empty_text_color": "#FFFFFF",
+        "empty_text_color": "#ffffff",
         "show_clear_button": true,
-        "meta_text_color": "#FFFFFF"
+        "meta_text_color": "#ffffff"
       }
     }
   },
   "order": [
     "main",
+    "video_banner_Ar8XEV",
     "my_stuff_qRDAPR"
   ]
 }
