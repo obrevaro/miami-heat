@@ -21,7 +21,16 @@ export default defineConfig({
   ],
   ssr: {
     optimizeDeps: {
-      include: ['typographic-base'],
+      include: [
+        'mux.js/lib/utils/clock',
+        'mux.js/lib/tools/parse-sidx',
+        '@xmldom/xmldom',
+        'videojs-vtt.js',
+        '@videojs/xhr',
+        'global/document',
+        'global/window',
+        'typographic-base',
+      ],
     },
   },
   optimizeDeps: {
