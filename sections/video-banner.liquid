@@ -1,0 +1,415 @@
+{{ 'section-video-banner.css' | asset_url | stylesheet_tag }}
+
+<!-- Video.js CSS and JS -->
+<link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
+<script src="https://vjs.zencdn.net/8.6.1/video.min.js" defer></script>
+
+{%- style -%}
+  #VideoBanner-{{ section.id }} {
+    position: relative;
+    width: 100%;
+    height: {{ section.settings.video_height }}vh;
+    overflow: hidden;
+    background-color: #000;
+  }
+
+  #VideoBanner-{{ section.id }} .video-js {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #VideoBanner-{{ section.id }} .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2rem;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    z-index: 20;
+    color: white;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .summary {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    max-width: 60%;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .metadata {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .metadata span {
+    background: rgba(255,255,255,0.2);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .cta-buttons {
+    display: flex;
+    gap: 1rem;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn {
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-primary {
+    background: #e50914;
+    color: white;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-primary:hover {
+    background: #f40612;
+    transform: translateY(-2px);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-secondary {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    backdrop-filter: blur(4px);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-secondary:hover {
+    background: rgba(255,255,255,0.4);
+  }
+
+  @media screen and (max-width: 768px) {
+    #VideoBanner-{{ section.id }} {
+      height: {{ section.settings.mobile_video_height }}vh;
+    }
+    
+    #VideoBanner-{{ section.id }} .content-overlay {
+      padding: 1rem;
+    }
+    
+    #VideoBanner-{{ section.id }} .content-overlay h1 {
+      font-size: 2rem;
+    }
+    
+    #VideoBanner-{{ section.id }} .content-overlay .summary {
+      font-size: 1rem;
+      max-width: 90%;
+    }
+    
+    #VideoBanner-{{ section.id }} .content-overlay .cta-buttons {
+      flex-direction: column;
+    }
+  }
+{%- endstyle -%}
+
+<div
+  id="VideoBanner-{{ section.id }}"
+  class="video-banner{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--fade-in{% endif %}"
+  data-refresh-interval="{{ section.settings.refresh_interval | default: 30 }}"
+  data-api-url="{{ section.settings.api_url | default: 'https://winoapi.replit.app/?random=true' }}"
+>
+  <!-- Video Element -->
+  <video
+    id="video-player-{{ section.id }}"
+    class="video-js vjs-default-skin"
+    controls
+    preload="auto"
+    muted
+    autoplay
+    loop
+    data-setup="{}"
+  >
+    <p class="vjs-no-js">
+      To view this video please enable JavaScript, and consider upgrading to a web browser that
+      <a href="https://videojs.com/html5-video-support/" target="_blank">
+        supports HTML5 video
+      </a>.
+    </p>
+  </video>
+
+  <!-- Video Overlay -->
+  <div class="video-overlay"></div>
+
+  <!-- Content Overlay -->
+  <div class="content-overlay">
+    <div class="metadata" id="metadata-{{ section.id }}">
+      <span class="category">Loading...</span>
+      <span class="duration">--:--</span>
+      <span class="provider">--</span>
+    </div>
+    
+    <h1 id="title-{{ section.id }}">Loading Content...</h1>
+    
+    <div class="summary" id="summary-{{ section.id }}">
+      Please wait while we load the latest content...
+    </div>
+
+    <div class="cta-buttons">
+      {%- if section.settings.show_play_button -%}
+        <button class="btn btn-primary" id="play-btn-{{ section.id }}">
+          ▶ Play
+        </button>
+      {%- endif -%}
+      {%- if section.settings.show_info_button -%}
+        <button class="btn btn-secondary" id="info-btn-{{ section.id }}">
+          ℹ More Info
+        </button>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const videoBanner = document.getElementById('VideoBanner-{{ section.id }}');
+  const playerId = 'video-player-{{ section.id }}';
+  const refreshInterval = parseInt(videoBanner.dataset.refreshInterval) * 1000; // Convert seconds to milliseconds
+  const apiUrl = videoBanner.dataset.apiUrl;
+  let player;
+  let currentVideoData = null;
+  let userInteracted = false;
+
+  // Initialize Video.js player
+  function initPlayer() {
+    player = videojs(playerId, {
+      fluid: true,
+      responsive: true,
+      controls: false,
+      autoplay: 'muted',
+      muted: true,
+      loop: true,
+      preload: 'auto',
+      html5: {
+        hls: {
+          enableLowInitialPlaylist: true,
+          smoothQualityChange: true,
+          overrideNative: true
+        }
+      }
+    });
+
+    // Handle user interaction
+    player.on('click', function() {
+      userInteracted = true;
+      if (player.muted()) {
+        player.muted(false);
+        player.controls(true);
+      }
+    });
+
+    // Handle play button click
+    document.getElementById('play-btn-{{ section.id }}').addEventListener('click', function() {
+      userInteracted = true;
+      player.muted(false);
+      player.controls(true);
+      player.play();
+    });
+
+    // Handle info button click
+    document.getElementById('info-btn-{{ section.id }}').addEventListener('click', function() {
+      if (currentVideoData) {
+        showContentInfo(currentVideoData);
+      }
+    });
+
+    return player;
+  }
+
+  // Fetch content from API
+  async function fetchContent() {
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      
+      if (data.entry && data.entry.length > 0) {
+        const videoEntry = data.entry[0];
+        currentVideoData = videoEntry;
+        updateVideoContent(videoEntry);
+      }
+    } catch (error) {
+      console.error('Error fetching video content:', error);
+    }
+  }
+
+  // Update video content
+  function updateVideoContent(videoData) {
+    if (!player) return;
+
+    const { content, extensions, summary, title, media_group } = videoData;
+    
+    // Update video source
+    if (content && content.src) {
+      player.src({
+        src: content.src,
+        type: content.type || 'video/mp4'
+      });
+    }
+
+    // Update overlay content
+    document.getElementById('title-{{ section.id }}').textContent = title || 'Untitled';
+    document.getElementById('summary-{{ section.id }}').textContent = summary || '';
+    
+    // Update metadata
+    const metadataContainer = document.getElementById('metadata-{{ section.id }}');
+    const category = extensions?.category || 'Video';
+    const duration = extensions?.duration ? formatDuration(extensions.duration) : '--:--';
+    const provider = extensions?.provider || 'Unknown';
+    
+    metadataContainer.innerHTML = `
+      <span class="category">${category}</span>
+      <span class="duration">${duration}</span>
+      <span class="provider">${provider}</span>
+    `;
+
+    // Reset mute state for new content if user hasn't interacted
+    if (!userInteracted) {
+      player.muted(true);
+      player.controls(false);
+    }
+  }
+
+  // Format duration from seconds to MM:SS
+  function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Show content info modal (you can customize this)
+  function showContentInfo(videoData) {
+    const info = `
+Title: ${videoData.title}
+Summary: ${videoData.summary}
+Category: ${videoData.extensions?.category || 'N/A'}
+Provider: ${videoData.extensions?.provider || 'N/A'}
+Duration: ${videoData.extensions?.duration ? formatDuration(videoData.extensions.duration) : 'N/A'}
+    `;
+    alert(info); // Replace with a proper modal implementation
+  }
+
+  // Initialize everything
+  player = initPlayer();
+  
+  // Initial content fetch
+  fetchContent();
+  
+  // Set up refresh interval
+  if (refreshInterval > 0) {
+    setInterval(fetchContent, refreshInterval);
+  }
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', function() {
+    if (player) {
+      player.dispose();
+    }
+  });
+});
+</script>
+
+{% schema %}
+{
+  "name": "Video Banner",
+  "tag": "section",
+  "class": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Video Settings"
+    },
+    {
+      "type": "text",
+      "id": "api_url",
+      "label": "API URL",
+      "default": "https://winoapi.replit.app/?random=true",
+      "info": "URL to fetch video content from"
+    },
+    {
+      "type": "range",
+      "id": "refresh_interval",
+      "min": 10,
+      "max": 300,
+      "step": 5,
+      "unit": "s",
+      "label": "Content Refresh Interval",
+      "default": 30,
+      "info": "How often to fetch new content (in seconds)"
+    },
+    {
+      "type": "range",
+      "id": "video_height",
+      "min": 40,
+      "max": 100,
+      "step": 5,
+      "unit": "vh",
+      "label": "Desktop Video Height",
+      "default": 70
+    },
+    {
+      "type": "range",
+      "id": "mobile_video_height",
+      "min": 30,
+      "max": 80,
+      "step": 5,
+      "unit": "vh",
+      "label": "Mobile Video Height", 
+      "default": 50
+    },
+    {
+      "type": "header",
+      "content": "Content Overlay"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_play_button",
+      "default": true,
+      "label": "Show Play Button"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_info_button",
+      "default": true,
+      "label": "Show Info Button"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Video Banner"
+    }
+  ]
+}
+{% endschema %} 

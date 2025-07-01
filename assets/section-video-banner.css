@@ -1,0 +1,96 @@
+/* Video Banner Section Styles */
+
+.video-banner {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Video.js customizations */
+.video-banner .video-js {
+  outline: none;
+}
+
+.video-banner .video-js .vjs-big-play-button {
+  display: none;
+}
+
+.video-banner .video-js .vjs-control-bar {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.video-banner .video-js:hover .vjs-control-bar {
+  opacity: 1;
+}
+
+/* Content overlay animations */
+.video-banner .content-overlay {
+  animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading state */
+.video-banner.loading .content-overlay h1,
+.video-banner.loading .content-overlay .summary {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 480px) {
+  .video-banner .content-overlay .metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .video-banner .content-overlay .metadata span {
+    display: inline-block;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Accessibility improvements */
+.video-banner .content-overlay .btn:focus {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.video-banner .content-overlay .btn:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Video overlay effects */
+.video-banner .video-overlay {
+  animation: overlayPulse 8s ease-in-out infinite;
+}
+
+@keyframes overlayPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
