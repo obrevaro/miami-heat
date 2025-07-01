@@ -545,7 +545,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!video.content || !video.content.src) {
       console.error('No video source available');
-      alert('Video source not available');
+      // Replace alert with console.error since alert is also blocked
+      console.error('Video source not available');
       return;
     }
     
@@ -680,43 +681,192 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-
+  // Custom confirmation dialog for sandboxed environments
+  function createConfirmDialog(message, onConfirm, onCancel, confirmText = 'Remove') {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    
+    // Create dialog
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      background: white;
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    `;
+    
+    // Create message
+    const messageEl = document.createElement('p');
+    messageEl.style.cssText = `
+      margin: 0 0 1.5rem 0;
+      font-size: 1.1rem;
+      color: #333;
+      line-height: 1.4;
+    `;
+    messageEl.textContent = message;
+    
+    // Create button container
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.cssText = `
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    `;
+    
+    // Create cancel button
+    const cancelBtn = document.createElement('button');
+    cancelBtn.style.cssText = `
+      padding: 0.75rem 1.5rem;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+    `;
+    cancelBtn.textContent = 'Cancel';
+    
+    // Create confirm button
+    const confirmBtn = document.createElement('button');
+    confirmBtn.style.cssText = `
+      padding: 0.75rem 1.5rem;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+    `;
+    confirmBtn.textContent = confirmText;
+    
+    // Add hover effects
+    cancelBtn.addEventListener('mouseenter', () => {
+      cancelBtn.style.background = '#5a6268';
+    });
+    cancelBtn.addEventListener('mouseleave', () => {
+      cancelBtn.style.background = '#6c757d';
+    });
+    
+    confirmBtn.addEventListener('mouseenter', () => {
+      confirmBtn.style.background = '#c82333';
+    });
+    confirmBtn.addEventListener('mouseleave', () => {
+      confirmBtn.style.background = '#dc3545';
+    });
+    
+    // Close dialog function
+    function closeDialog() {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+    }
+    
+    // Button events
+    cancelBtn.addEventListener('click', () => {
+      closeDialog();
+      if (onCancel) onCancel();
+    });
+    
+    confirmBtn.addEventListener('click', () => {
+      closeDialog();
+      if (onConfirm) onConfirm();
+    });
+    
+    // Close on Escape key
+    function handleKeydown(e) {
+      if (e.key === 'Escape') {
+        closeDialog();
+        if (onCancel) onCancel();
+        document.removeEventListener('keydown', handleKeydown);
+      }
+    }
+    document.addEventListener('keydown', handleKeydown);
+    
+    // Close when clicking outside dialog
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closeDialog();
+        if (onCancel) onCancel();
+      }
+    });
+    
+    // Assemble dialog
+    buttonContainer.appendChild(cancelBtn);
+    buttonContainer.appendChild(confirmBtn);
+    dialog.appendChild(messageEl);
+    dialog.appendChild(buttonContainer);
+    overlay.appendChild(dialog);
+    
+    // Add to page
+    document.body.appendChild(overlay);
+  }
 
   // Remove video from My Stuff
   function removeFromMyStuff(videoId, videoTitle) {
-    if (confirm(`Remove "${videoTitle}" from My Stuff?`)) {
-      try {
-        let myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
-        
-        // Filter out the video with the matching ID
-        myStuff = myStuff.filter(video => video.id !== videoId);
-        
-        // Save back to localStorage
-        localStorage.setItem('myStuff', JSON.stringify(myStuff));
-        
-        // Reload the display with force refresh
-        loadMyStuff(true);
-        
-        // Dispatch custom event to update other My Stuff sections and video banners
-        window.dispatchEvent(new CustomEvent('myStuffUpdated'));
-        
-        console.log(`Removed "${videoTitle}" from My Stuff`);
-      } catch (error) {
-        console.error('Error removing from My Stuff:', error);
-        alert('Error removing video from My Stuff');
-      }
-    }
+    createConfirmDialog(
+      `Remove "${videoTitle}" from My Stuff?`,
+      // On confirm
+      function() {
+        try {
+          let myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+          
+          // Filter out the video with the matching ID
+          myStuff = myStuff.filter(video => video.id !== videoId);
+          
+          // Save back to localStorage
+          localStorage.setItem('myStuff', JSON.stringify(myStuff));
+          
+          // Reload the display with force refresh
+          loadMyStuff(true);
+          
+          // Dispatch custom event to update other My Stuff sections and video banners
+          window.dispatchEvent(new CustomEvent('myStuffUpdated'));
+          
+          console.log(`Removed "${videoTitle}" from My Stuff`);
+        } catch (error) {
+          console.error('Error removing from My Stuff:', error);
+          // Replace alert with console.error since alert is also blocked
+          console.error('Error removing video from My Stuff');
+        }
+      },
+      // On cancel - do nothing
+      null
+    );
   }
 
   // Clear all My Stuff
   if (clearButton) {
     clearButton.addEventListener('click', function() {
-      if (confirm('Are you sure you want to clear all videos from My Stuff?')) {
-        localStorage.removeItem('myStuff');
-        loadMyStuff(true);
-        // Dispatch custom event to update other My Stuff sections
-        window.dispatchEvent(new CustomEvent('myStuffUpdated'));
-      }
+      createConfirmDialog(
+        'Are you sure you want to clear all videos from My Stuff?',
+        // On confirm
+        function() {
+          localStorage.removeItem('myStuff');
+          loadMyStuff(true);
+          // Dispatch custom event to update other My Stuff sections
+          window.dispatchEvent(new CustomEvent('myStuffUpdated'));
+        },
+        // On cancel - do nothing
+        null,
+        'Clear All'
+      );
     });
   }
 
