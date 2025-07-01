@@ -1,0 +1,1032 @@
+{{ 'section-video-banner.css' | asset_url | stylesheet_tag }}
+
+<!-- Video.js CSS and JS -->
+<link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
+<script src="https://vjs.zencdn.net/8.6.1/video.min.js" defer></script>
+
+{%- style -%}
+  #VideoBanner-{{ section.id }} {
+    position: relative;
+    width: 100%;
+    height: {{ section.settings.video_height }}vh;
+    overflow: hidden;
+    background-color: #000;
+    margin-top: {{ section.settings.container_margin_top }}px;
+    margin-bottom: {{ section.settings.container_margin_bottom }}px;
+    margin-left: {{ section.settings.container_margin_left }}px;
+    margin-right: {{ section.settings.container_margin_right }}px;
+    padding-top: {{ section.settings.container_padding_top }}px;
+    padding-bottom: {{ section.settings.container_padding_bottom }}px;
+    padding-left: {{ section.settings.container_padding_left }}px;
+    padding-right: {{ section.settings.container_padding_right }}px;
+  }
+
+  #VideoBanner-{{ section.id }} .video-js {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #VideoBanner-{{ section.id }} .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay {
+    position: absolute;
+    {{ section.settings.text_position }}: 0;
+    left: 0;
+    right: 0;
+    padding-top: {{ section.settings.text_padding_top }}px;
+    padding-bottom: {{ section.settings.text_padding_bottom }}px;
+    padding-left: {{ section.settings.text_padding_left }}px;
+    padding-right: {{ section.settings.text_padding_right }}px;
+    margin-top: {{ section.settings.text_margin_top }}px;
+    margin-bottom: {{ section.settings.text_margin_bottom }}px;
+    margin-left: {{ section.settings.text_margin_left }}px;
+    margin-right: {{ section.settings.text_margin_right }}px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    z-index: 20;
+    color: {{ section.settings.text_color }};
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay h1 {
+    font-size: {{ section.settings.title_font_size }}px;
+    font-weight: {{ section.settings.title_font_weight }};
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    color: {{ section.settings.title_color }};
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .summary {
+    font-size: {{ section.settings.summary_font_size }}px;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    max-width: {{ section.settings.summary_max_width }}%;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    color: {{ section.settings.summary_color }};
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .metadata {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .metadata span {
+    background: rgba(255,255,255,0.2);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .cta-buttons {
+    display: flex;
+    gap: 1rem;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn {
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-primary {
+    background: #e50914;
+    color: white;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-primary:hover {
+    background: #f40612;
+    transform: translateY(-2px);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-secondary {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    backdrop-filter: blur(4px);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-secondary:hover {
+    background: rgba(255,255,255,0.4);
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-success {
+    background: #28a745;
+    color: white;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+  }
+
+  @media screen and (max-width: 768px) {
+    #VideoBanner-{{ section.id }} {
+      height: {{ section.settings.mobile_video_height }}vh;
+    }
+    
+    #VideoBanner-{{ section.id }} .content-overlay {
+      padding: 1rem;
+    }
+    
+    #VideoBanner-{{ section.id }} .content-overlay h1 {
+      font-size: 2rem;
+    }
+    
+    #VideoBanner-{{ section.id }} .content-overlay .summary {
+      font-size: 1rem;
+      max-width: 90%;
+    }
+    
+    #VideoBanner-{{ section.id }} .content-overlay .cta-buttons {
+      flex-direction: column;
+    }
+  }
+{%- endstyle -%}
+
+<div
+  id="VideoBanner-{{ section.id }}"
+  class="video-banner{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--fade-in{% endif %}"
+  data-refresh-interval="{{ section.settings.refresh_interval | default: 30 }}"
+  data-api-url="{{ section.settings.api_url | default: 'https://winoapi.replit.app/?random=true' }}"
+  data-use-my-stuff="{{ section.settings.use_my_stuff | default: false }}"
+  data-title-source="{{ section.settings.title_data_source | default: 'title' }}"
+  data-summary-source="{{ section.settings.summary_data_source | default: 'summary' }}"
+  data-category-source="{{ section.settings.category_data_source | default: 'extensions.category' }}"
+  data-duration-source="{{ section.settings.duration_data_source | default: 'extensions.duration' }}"
+  data-provider-source="{{ section.settings.provider_data_source | default: 'extensions.provider' }}"
+>
+  <!-- Video Element -->
+  <video
+    id="video-player-{{ section.id }}"
+    class="video-js vjs-default-skin"
+    controls
+    preload="auto"
+    muted
+    autoplay
+    loop
+    data-setup="{}"
+  >
+    <p class="vjs-no-js">
+      To view this video please enable JavaScript, and consider upgrading to a web browser that
+      <a href="https://videojs.com/html5-video-support/" target="_blank">
+        supports HTML5 video
+      </a>.
+    </p>
+  </video>
+
+  <!-- Video Overlay -->
+  <div class="video-overlay"></div>
+
+  <!-- Content Overlay -->
+  <div class="content-overlay">
+    <div class="metadata" id="metadata-{{ section.id }}">
+      <span class="category">Loading...</span>
+      <span class="duration">--:--</span>
+      <span class="provider">--</span>
+    </div>
+    
+    <h1 id="title-{{ section.id }}">Loading Content...</h1>
+    
+    <div class="summary" id="summary-{{ section.id }}">
+      Please wait while we load the latest content...
+    </div>
+
+    <div class="cta-buttons">
+      {%- if section.settings.show_play_button -%}
+        <button class="btn btn-primary" id="play-btn-{{ section.id }}">
+          ▶ Play
+        </button>
+      {%- endif -%}
+      {%- if section.settings.show_add_button -%}
+        <button class="btn btn-secondary" id="add-btn-{{ section.id }}">
+          + Add to My Stuff
+        </button>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const videoBanner = document.getElementById('VideoBanner-{{ section.id }}');
+  const playerId = 'video-player-{{ section.id }}';
+  const refreshInterval = parseInt(videoBanner.dataset.refreshInterval) * 1000; // Convert seconds to milliseconds
+  const apiUrl = videoBanner.dataset.apiUrl;
+  const titleSource = videoBanner.dataset.titleSource || 'title';
+  const summarySource = videoBanner.dataset.summarySource || 'summary';
+  const categorySource = videoBanner.dataset.categorySource || 'extensions.category';
+  const durationSource = videoBanner.dataset.durationSource || 'extensions.duration';
+  const providerSource = videoBanner.dataset.providerSource || 'extensions.provider';
+  let player;
+  let currentVideoData = null;
+  let userInteracted = false;
+  let refreshIntervalId = null;
+  let isFullscreen = false;
+  let myStuffIndex = 0;
+  let myStuffVideos = [];
+
+  // Initialize Video.js player
+  function initPlayer() {
+    player = videojs(playerId, {
+      fluid: true,
+      responsive: true,
+      controls: false,
+      autoplay: 'muted',
+      muted: true,
+      loop: true,
+      preload: 'auto',
+      html5: {
+        hls: {
+          enableLowInitialPlaylist: true,
+          smoothQualityChange: true,
+          overrideNative: true,
+          withCredentials: false
+        }
+      }
+    });
+
+    // Handle user interaction
+    player.on('click', function() {
+      userInteracted = true;
+      if (player.muted()) {
+        player.muted(false);
+        player.controls(true);
+      }
+    });
+
+    // Handle player errors
+    player.on('error', function() {
+      const error = player.error();
+      console.error('Video player error:', error);
+      
+      // Try to recover from certain HLS errors
+      if (error && error.code === 4) {
+        console.log('Media error detected, attempting to reload...');
+        setTimeout(() => {
+          if (currentVideoData && currentVideoData.content && currentVideoData.content.src) {
+            console.log('Reloading video source...');
+            player.load();
+          }
+        }, 2000);
+      }
+    });
+
+    // Log when HLS is loaded
+    player.on('loadedmetadata', function() {
+      const tech = player.tech();
+      if (tech && tech.hls) {
+        console.log('HLS stream loaded successfully');
+      }
+    });
+
+    // Handle fullscreen events
+    player.on('fullscreenchange', function() {
+      isFullscreen = player.isFullscreen();
+      
+      if (isFullscreen) {
+        // User entered fullscreen - stop content refresh
+        stopContentRefresh();
+        console.log('Entered fullscreen - content refresh paused');
+      } else {
+        // User exited fullscreen - optionally restart content refresh
+        // Uncomment the line below if you want to resume content refresh after fullscreen
+        // startContentRefresh();
+        console.log('Exited fullscreen');
+      }
+    });
+
+    // Handle play button click
+    document.getElementById('play-btn-{{ section.id }}').addEventListener('click', function() {
+      userInteracted = true;
+      player.muted(false);
+      player.controls(true);
+      player.play();
+      
+      // Request fullscreen
+      if (player.requestFullscreen) {
+        player.requestFullscreen();
+      } else if (player.el().requestFullscreen) {
+        player.el().requestFullscreen();
+      } else if (player.el().webkitRequestFullscreen) {
+        player.el().webkitRequestFullscreen();
+      } else if (player.el().mozRequestFullScreen) {
+        player.el().mozRequestFullScreen();
+      } else if (player.el().msRequestFullscreen) {
+        player.el().msRequestFullscreen();
+      }
+    });
+
+    // Handle add to my stuff button click
+    document.getElementById('add-btn-{{ section.id }}').addEventListener('click', function() {
+      if (currentVideoData) {
+        toggleMyStuff(currentVideoData);
+      }
+    });
+
+    return player;
+  }
+
+  // Fetch content from API or My Stuff
+  async function fetchContent() {
+    const useMyStuff = videoBanner.dataset.useMyStuff === 'true';
+    
+    if (useMyStuff) {
+      fetchFromMyStuff();
+    } else {
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data.entry && data.entry.length > 0) {
+          const videoEntry = data.entry[0];
+          currentVideoData = videoEntry;
+          updateVideoContent(videoEntry);
+        }
+      } catch (error) {
+        console.error('Error fetching video content:', error);
+      }
+    }
+  }
+
+  // Fetch content from My Stuff localStorage
+  function fetchFromMyStuff() {
+    try {
+      myStuffVideos = JSON.parse(localStorage.getItem('myStuff') || '[]');
+      
+      if (myStuffVideos.length === 0) {
+        console.log('No videos in My Stuff');
+        return;
+      }
+
+      // Get current video from My Stuff list
+      const videoEntry = myStuffVideos[myStuffIndex];
+      currentVideoData = videoEntry;
+      updateVideoContent(videoEntry);
+
+      // Move to next video for next fetch (infinite loop)
+      myStuffIndex = (myStuffIndex + 1) % myStuffVideos.length;
+      
+      console.log(`Playing My Stuff video ${myStuffIndex + 1}/${myStuffVideos.length}: ${videoEntry.title}`);
+    } catch (error) {
+      console.error('Error fetching from My Stuff:', error);
+    }
+  }
+
+  // Helper function to get nested object property by path
+  function getNestedValue(obj, path) {
+    return path.split('.').reduce((current, key) => current && current[key], obj);
+  }
+
+  // Update video content
+  function updateVideoContent(videoData) {
+    if (!player) return;
+
+    const { content } = videoData;
+    
+    // Update video source
+    if (content && content.src) {
+      // Map HLS content types properly
+      let contentType = content.type || 'video/mp4';
+      if (contentType === 'video/hls' || contentType === 'application/x-mpegURL') {
+        contentType = 'application/x-mpegURL';
+      }
+      
+      // For HLS content, disable loop on the player element
+      const isHLS = contentType === 'application/x-mpegURL';
+      
+      if (isHLS) {
+        player.loop(false);
+      } else {
+        player.loop(true);
+      }
+      
+      // Wait for player to be ready before setting source
+      player.ready(() => {
+        console.log(`Loading ${isHLS ? 'HLS' : 'standard'} video:`, content.src, `(${contentType})`);
+        
+        player.src({
+          src: content.src,
+          type: contentType
+        });
+        
+        // Reset mute state and controls for new content if user hasn't interacted
+        if (!userInteracted) {
+          player.muted(true);
+          player.controls(false);
+        }
+        
+        // For HLS, wait a bit longer before starting playback
+        if (isHLS) {
+          setTimeout(() => {
+            if (!userInteracted) {
+              player.play().catch(error => {
+                console.log('Auto-play prevented:', error);
+              });
+            }
+          }, 1000);
+        } else {
+          // For non-HLS content, start immediately
+          if (!userInteracted) {
+            player.play().catch(error => {
+              console.log('Auto-play prevented:', error);
+            });
+          }
+        }
+      });
+    }
+
+    // Get content using configurable data sources
+    const titleValue = getNestedValue(videoData, titleSource) || 'Untitled';
+    const summaryValue = getNestedValue(videoData, summarySource) || '';
+    const categoryValue = getNestedValue(videoData, categorySource) || 'Video';
+    const durationValue = getNestedValue(videoData, durationSource);
+    const providerValue = getNestedValue(videoData, providerSource) || 'Unknown';
+
+    // Update overlay content
+    document.getElementById('title-{{ section.id }}').textContent = titleValue;
+    document.getElementById('summary-{{ section.id }}').textContent = summaryValue;
+    
+    // Update metadata
+    const metadataContainer = document.getElementById('metadata-{{ section.id }}');
+    const formattedDuration = durationValue ? formatDuration(durationValue) : '--:--';
+    
+    metadataContainer.innerHTML = `
+      <span class="category">${categoryValue}</span>
+      <span class="duration">${formattedDuration}</span>
+      <span class="provider">${providerValue}</span>
+    `;
+
+    // Update Add to My Stuff button state
+    updateMyStuffButtonState();
+  }
+
+  // Format duration from seconds to MM:SS
+  function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Check if current video is in My Stuff
+  function isVideoInMyStuff(videoData) {
+    if (!videoData || !videoData.id) return false;
+    
+    try {
+      const myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+      return myStuff.some(item => item.id === videoData.id);
+    } catch (error) {
+      console.error('Error checking My Stuff:', error);
+      return false;
+    }
+  }
+
+  // Update My Stuff button state based on current video
+  function updateMyStuffButtonState() {
+    const addBtn = document.getElementById('add-btn-{{ section.id }}');
+    if (!addBtn || !currentVideoData) return;
+
+    const isInMyStuff = isVideoInMyStuff(currentVideoData);
+    
+    if (isInMyStuff) {
+      addBtn.textContent = '✓ In My Stuff';
+      addBtn.className = 'btn btn-success';
+      addBtn.style.background = '#28a745';
+      addBtn.title = 'Click to remove from My Stuff';
+    } else {
+      addBtn.textContent = '+ Add to My Stuff';
+      addBtn.className = 'btn btn-secondary';
+      addBtn.style.background = '';
+      addBtn.title = 'Click to add to My Stuff';
+    }
+  }
+
+  // Add or remove video from My Stuff (localStorage)
+  function toggleMyStuff(videoData) {
+    if (!videoData || !videoData.id) {
+      console.error('Invalid video data');
+      return;
+    }
+
+    try {
+      let myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+      const existingIndex = myStuff.findIndex(item => item.id === videoData.id);
+      
+      if (existingIndex === -1) {
+        // Add new video to the beginning of the array
+        myStuff.unshift({
+          id: videoData.id,
+          title: videoData.title,
+          summary: videoData.summary,
+          content: videoData.content,
+          extensions: videoData.extensions,
+          media_group: videoData.media_group,
+          addedAt: Date.now()
+        });
+        
+        console.log('Video added to My Stuff:', videoData.title);
+        
+        // Show success feedback
+        const addBtn = document.getElementById('add-btn-{{ section.id }}');
+        const originalText = addBtn.textContent;
+        addBtn.textContent = '✓ Added!';
+        addBtn.style.background = '#28a745';
+        
+        setTimeout(() => {
+          updateMyStuffButtonState();
+        }, 1000);
+        
+      } else {
+        // Remove video from My Stuff
+        myStuff.splice(existingIndex, 1);
+        console.log('Video removed from My Stuff:', videoData.title);
+        
+        // Show removal feedback
+        const addBtn = document.getElementById('add-btn-{{ section.id }}');
+        addBtn.textContent = 'Removed';
+        addBtn.style.background = '#dc3545';
+        
+        setTimeout(() => {
+          updateMyStuffButtonState();
+        }, 1000);
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem('myStuff', JSON.stringify(myStuff));
+      
+      // Dispatch custom event to update My Stuff sections
+      window.dispatchEvent(new CustomEvent('myStuffUpdated'));
+      
+    } catch (error) {
+      console.error('Error toggling My Stuff:', error);
+      alert('Error updating My Stuff');
+    }
+  }
+
+  // Start content refresh interval
+  function startContentRefresh() {
+    if (refreshInterval > 0 && !refreshIntervalId) {
+      refreshIntervalId = setInterval(fetchContent, refreshInterval);
+      console.log('Content refresh started');
+    }
+  }
+
+  // Stop content refresh interval
+  function stopContentRefresh() {
+    if (refreshIntervalId) {
+      clearInterval(refreshIntervalId);
+      refreshIntervalId = null;
+      console.log('Content refresh stopped');
+    }
+  }
+
+  // Initialize everything
+  player = initPlayer();
+  
+  // Initial content fetch
+  fetchContent();
+  
+  // Set up refresh interval
+  startContentRefresh();
+
+  // Initial button state update (in case page loads with content)
+  setTimeout(() => {
+    updateMyStuffButtonState();
+  }, 500);
+
+  // Listen for My Stuff updates (when videos are added/removed)
+  window.addEventListener('myStuffUpdated', function() {
+    if (videoBanner.dataset.useMyStuff === 'true') {
+      // Reset index to start from beginning when My Stuff changes
+      myStuffIndex = 0;
+      myStuffVideos = [];
+      fetchContent();
+    }
+    
+    // Always update button state when My Stuff changes
+    updateMyStuffButtonState();
+  });
+
+  // Clean up on page unload
+  window.addEventListener('beforeunload', function() {
+    stopContentRefresh();
+    if (player) {
+      player.dispose();
+    }
+  });
+});
+</script>
+
+{% schema %}
+{
+  "name": "Video Banner",
+  "tag": "section",
+  "class": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Video Settings"
+    },
+    {
+      "type": "text",
+      "id": "api_url",
+      "label": "API URL",
+      "default": "https://winoapi.replit.app/?random=true",
+      "info": "URL to fetch video content from. Supports MP4, HLS (video/hls, application/x-mpegURL), and other Video.js compatible formats."
+    },
+    {
+      "type": "checkbox",
+      "id": "use_my_stuff",
+      "default": false,
+      "label": "Use My Stuff as Video Source",
+      "info": "When enabled, videos will be sourced from the user's My Stuff collection instead of the API. Videos will loop infinitely through the collection."
+    },
+    {
+      "type": "range",
+      "id": "refresh_interval",
+      "min": 10,
+      "max": 300,
+      "step": 5,
+      "unit": "s",
+      "label": "Content Refresh Interval",
+      "default": 30,
+      "info": "How often to fetch new content (in seconds)"
+    },
+    {
+      "type": "range",
+      "id": "video_height",
+      "min": 40,
+      "max": 100,
+      "step": 5,
+      "unit": "vh",
+      "label": "Desktop Video Height",
+      "default": 70
+    },
+    {
+      "type": "range",
+      "id": "mobile_video_height",
+      "min": 30,
+      "max": 80,
+      "step": 5,
+      "unit": "vh",
+      "label": "Mobile Video Height", 
+      "default": 50
+    },
+    {
+      "type": "header",
+      "content": "Container Spacing"
+    },
+    {
+      "type": "range",
+      "id": "container_margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Top Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Bottom Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_margin_left",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Left Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_margin_right",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Right Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Top Padding",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Bottom Padding",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_padding_left",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Left Padding",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_padding_right",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Right Padding",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Text Container Settings"
+    },
+    {
+      "type": "select",
+      "id": "text_position",
+      "options": [
+        {
+          "value": "top",
+          "label": "Top"
+        },
+        {
+          "value": "bottom",
+          "label": "Bottom"
+        }
+      ],
+      "default": "bottom",
+      "label": "Text Position"
+    },
+    {
+      "type": "range",
+      "id": "text_margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Top Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "text_margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Bottom Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "text_margin_left",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Left Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "text_margin_right",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Right Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "text_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Top Padding",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "text_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Bottom Padding",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "text_padding_left",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Left Padding",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "text_padding_right",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Right Padding",
+      "default": 30
+    },
+    {
+      "type": "header",
+      "content": "Title Settings"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "min": 16,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "label": "Title Font Size",
+      "default": 48
+    },
+    {
+      "type": "select",
+      "id": "title_font_weight",
+      "options": [
+        {
+          "value": "300",
+          "label": "Light"
+        },
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi Bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        },
+        {
+          "value": "800",
+          "label": "Extra Bold"
+        }
+      ],
+      "default": "700",
+      "label": "Title Font Weight"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Summary Settings"
+    },
+    {
+      "type": "range",
+      "id": "summary_font_size",
+      "min": 12,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Summary Font Size",
+      "default": 19
+    },
+    {
+      "type": "color",
+      "id": "summary_color",
+      "label": "Summary Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "summary_max_width",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Summary Max Width",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "General Text Settings"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "General Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Data Source Mapping"
+    },
+    {
+      "type": "text",
+      "id": "title_data_source",
+      "label": "Title Data Source",
+      "default": "title",
+      "info": "API field path for title (e.g. 'title', 'extensions.series', 'summary')"
+    },
+    {
+      "type": "text",
+      "id": "summary_data_source",
+      "label": "Summary Data Source",
+      "default": "summary",
+      "info": "API field path for summary (e.g. 'summary', 'extensions.description', 'title')"
+    },
+    {
+      "type": "text",
+      "id": "category_data_source",
+      "label": "Category Data Source",
+      "default": "extensions.category",
+      "info": "API field path for category (e.g. 'extensions.category', 'extensions.provider')"
+    },
+    {
+      "type": "text",
+      "id": "duration_data_source",
+      "label": "Duration Data Source",
+      "default": "extensions.duration",
+      "info": "API field path for duration (e.g. 'extensions.duration')"
+    },
+    {
+      "type": "text",
+      "id": "provider_data_source",
+      "label": "Provider Data Source",
+      "default": "extensions.provider",
+      "info": "API field path for provider (e.g. 'extensions.provider', 'extensions.category')"
+    },
+    {
+      "type": "header",
+      "content": "Content Overlay"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_play_button",
+      "default": true,
+      "label": "Show Play Button"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_add_button",
+      "default": true,
+      "label": "Show Add to My Stuff Button"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Video Banner"
+    }
+  ]
+}
+{% endschema %} 
