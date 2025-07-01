@@ -1,1 +1,53 @@
-{"sections":{"main":{"type":"main-page","settings":{"padding_top":28,"padding_bottom":28}}},"order":["main"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {
+        "padding_top": 28,
+        "padding_bottom": 28
+      }
+    },
+    "my_stuff_qRDAPR": {
+      "type": "my-stuff",
+      "name": "My Stuff",
+      "settings": {
+        "section_title": "My Stuff",
+        "background_color": "#000000",
+        "section_padding_top": 40,
+        "section_padding_bottom": 40,
+        "container_padding": 20,
+        "title_font_size": 32,
+        "title_font_weight": "600",
+        "title_color": "#FFFFFF",
+        "title_alignment": "left",
+        "title_margin_bottom": 20,
+        "item_width": 200,
+        "mobile_item_width": 140,
+        "item_gap": 15,
+        "rail_padding": 10,
+        "item_border_radius": 8,
+        "item_title_size": 14,
+        "item_meta_size": 12,
+        "empty_title": "Your collection is empty",
+        "empty_message": "Start adding videos to your collection by clicking the 'Add to My Stuff' button on videos you want to save.",
+        "empty_text_color": "#FFFFFF",
+        "show_clear_button": true,
+        "meta_text_color": "#FFFFFF"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "my_stuff_qRDAPR"
+  ]
+}
