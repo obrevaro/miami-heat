@@ -237,10 +237,20 @@ document.addEventListener('DOMContentLoaded', function() {
   const myStuffCount = document.getElementById('my-stuff-count-{{ section.id }}');
   const clearButton = document.getElementById('clear-my-stuff-{{ section.id }}');
 
+  // Store current My Stuff data for comparison
+  let currentMyStuff = [];
+
   // Load and display My Stuff
-  function loadMyStuff() {
+  function loadMyStuff(forceRefresh = false) {
     try {
       const myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+      
+      // Check if data has changed to avoid unnecessary DOM updates
+      if (!forceRefresh && JSON.stringify(currentMyStuff) === JSON.stringify(myStuff)) {
+        return; // No changes, skip update
+      }
+      
+      currentMyStuff = [...myStuff]; // Store current state
       
       if (myStuff.length === 0) {
         myStuffEmpty.style.display = 'block';
@@ -256,12 +266,27 @@ document.addEventListener('DOMContentLoaded', function() {
       // Update count
       myStuffCount.textContent = `${myStuff.length} video${myStuff.length !== 1 ? 's' : ''}`;
 
-      // Clear existing items
+      // Get existing items to preserve DOM where possible
+      const existingItems = Array.from(myStuffRail.children);
+      const existingVideoIds = existingItems.map(item => item.dataset.videoId);
+      
+      // Clear rail for fresh render (this ensures proper order)
       myStuffRail.innerHTML = '';
 
       // Add items to rail
       myStuff.forEach((video, index) => {
-        const item = createMyStuffItem(video, index);
+        // Try to reuse existing DOM element if video hasn't changed
+        const existingIndex = existingVideoIds.indexOf(video.id);
+        let item;
+        
+        if (existingIndex !== -1 && existingItems[existingIndex]) {
+          // Reuse existing element
+          item = existingItems[existingIndex];
+        } else {
+          // Create new element
+          item = createMyStuffItem(video, index);
+        }
+        
         myStuffRail.appendChild(item);
       });
 
@@ -337,36 +362,58 @@ document.addEventListener('DOMContentLoaded', function() {
   function playMyStuffVideo(video) {
     console.log('Playing video from My Stuff:', video);
     
-    // Find video banner sections on the page
-    const videoBanners = document.querySelectorAll('[id^="VideoBanner-"]');
-    
-    if (videoBanners.length > 0) {
-      // Use the first video banner found
-      const videoBanner = videoBanners[0];
-      const sectionId = videoBanner.id.split('-')[1];
-      const playerId = `video-player-${sectionId}`;
-      
-      // Function to try accessing the player with retries
-      function tryAccessPlayer(attempts = 0) {
-        try {
-          // Check if videojs is available
-          if (typeof videojs === 'undefined') {
-            console.warn('Video.js not loaded yet, retrying...');
-            if (attempts < 5) {
-              setTimeout(() => tryAccessPlayer(attempts + 1), 500);
-              return;
-            } else {
-              console.error('Video.js failed to load after multiple attempts');
-              fallbackVideoPlay(video);
-              return;
-            }
+    // Function to try accessing the player with retries
+    function tryAccessPlayer(attempts = 0) {
+      try {
+        // Check if videojs is available
+        if (typeof videojs === 'undefined') {
+          console.warn('Video.js not loaded yet, retrying...');
+          if (attempts < 10) {
+            setTimeout(() => tryAccessPlayer(attempts + 1), 200);
+            return;
+          } else {
+            console.error('Video.js failed to load after multiple attempts');
+            return;
           }
+        }
 
-          // Get the Video.js player instance
+        // Find all video players on the page
+        const allPlayers = [];
+        
+        // Look for video banner sections
+        const videoBanners = document.querySelectorAll('[id^="VideoBanner-"]');
+        videoBanners.forEach(banner => {
+          const sectionId = banner.id.split('-')[1];
+          const playerId = `video-player-${sectionId}`;
+          if (document.getElementById(playerId)) {
+            allPlayers.push({ playerId, sectionId, banner });
+          }
+        });
+        
+        // Look for any other video.js players
+        const videoElements = document.querySelectorAll('video[data-vjs-player]');
+        videoElements.forEach(videoEl => {
+          if (videoEl.id && !allPlayers.find(p => p.playerId === videoEl.id)) {
+            allPlayers.push({ playerId: videoEl.id, sectionId: null, banner: null });
+          }
+        });
+        
+        if (allPlayers.length === 0) {
+          console.warn('No video players found on page');
+          return;
+        }
+        
+        // Use the first available player
+        const { playerId, sectionId, banner } = allPlayers[0];
+        
+        try {
           const player = videojs(playerId);
           
           if (player && video.content && video.content.src) {
             console.log('Found video player, updating content...');
+            
+            // Stop current video if playing
+            player.pause();
             
             // Update video source
             player.src({
@@ -374,88 +421,84 @@ document.addEventListener('DOMContentLoaded', function() {
               type: video.content.type || 'video/mp4'
             });
             
-            // Update overlay content
-            const titleElement = document.getElementById(`title-${sectionId}`);
-            const summaryElement = document.getElementById(`summary-${sectionId}`);
-            const metadataElement = document.getElementById(`metadata-${sectionId}`);
-            
-            if (titleElement) {
-              titleElement.textContent = video.title || 'Untitled';
-            }
-            
-            if (summaryElement) {
-              summaryElement.textContent = video.summary || '';
-            }
-            
-            if (metadataElement) {
-              const category = video.extensions?.category || 'Video';
-              const duration = video.extensions?.duration ? formatDuration(video.extensions.duration) : '--:--';
-              const provider = video.extensions?.provider || 'My Stuff';
+            // Update overlay content if we have section info
+            if (sectionId) {
+              const titleElement = document.getElementById(`title-${sectionId}`);
+              const summaryElement = document.getElementById(`summary-${sectionId}`);
+              const metadataElement = document.getElementById(`metadata-${sectionId}`);
               
-              metadataElement.innerHTML = `
-                <span class="category">${category}</span>
-                <span class="duration">${duration}</span>
-                <span class="provider">${provider}</span>
-              `;
+              if (titleElement) {
+                titleElement.textContent = video.title || 'Untitled';
+              }
+              
+              if (summaryElement) {
+                summaryElement.textContent = video.summary || '';
+              }
+              
+              if (metadataElement) {
+                const category = video.extensions?.category || 'Video';
+                const duration = video.extensions?.duration ? formatDuration(video.extensions.duration) : '--:--';
+                const provider = video.extensions?.provider || 'My Stuff';
+                
+                metadataElement.innerHTML = `
+                  <span class="category">${category}</span>
+                  <span class="duration">${duration}</span>
+                  <span class="provider">${provider}</span>
+                `;
+              }
+              
+              // Scroll to video banner section if available
+              if (banner) {
+                banner.scrollIntoView({ 
+                  behavior: 'smooth', 
+                  block: 'center' 
+                });
+              }
             }
             
-            // Scroll to video banner section first
-            videoBanner.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'center' 
-            });
-            
-            // Wait for scroll to complete, then play and go fullscreen
-            setTimeout(() => {
+            // Wait for the video to be ready and then play in fullscreen
+            player.ready(() => {
               // Enable controls and unmute
               player.muted(false);
               player.controls(true);
               
-              // Play the video
-              player.play().then(() => {
-                console.log('Video playing, attempting fullscreen...');
-                
-                // Request fullscreen after a short delay
-                setTimeout(() => {
+              // Wait a bit for scroll and loading
+              setTimeout(() => {
+                // Play the video and immediately go to fullscreen
+                player.play().then(() => {
+                  console.log('Video playing, going fullscreen...');
                   requestPlayerFullscreen(player);
-                }, 500);
-                
-              }).catch(err => {
-                console.log('Autoplay failed:', err);
-                // Still try to go fullscreen even if autoplay fails
-                setTimeout(() => {
+                }).catch(err => {
+                  console.log('Autoplay failed, trying fullscreen anyway:', err);
                   requestPlayerFullscreen(player);
-                }, 500);
-              });
-              
-            }, 800); // Wait for scroll animation
+                });
+              }, banner ? 500 : 100); // Wait longer if we scrolled
+            });
             
-            console.log('Video loaded in banner player:', video.title);
+            console.log('Video loaded in player:', video.title);
           } else {
-            console.warn('Video player not ready or no video source available');
-            if (attempts < 3) {
-              setTimeout(() => tryAccessPlayer(attempts + 1), 1000);
-            } else {
-              fallbackVideoPlay(video);
+            console.warn('Player not ready or no video source available');
+            if (attempts < 5) {
+              setTimeout(() => tryAccessPlayer(attempts + 1), 500);
             }
           }
-        } catch (error) {
-          console.error('Error updating video banner:', error);
-          if (attempts < 3) {
-            setTimeout(() => tryAccessPlayer(attempts + 1), 1000);
-          } else {
-            fallbackVideoPlay(video);
+        } catch (playerError) {
+          console.error('Error accessing player:', playerError);
+          if (attempts < 5) {
+            setTimeout(() => tryAccessPlayer(attempts + 1), 500);
           }
         }
+        
+      } catch (error) {
+        console.error('Error in tryAccessPlayer:', error);
+        if (attempts < 5) {
+          setTimeout(() => tryAccessPlayer(attempts + 1), 500);
+        }
       }
-      
-      // Start trying to access the player
-      tryAccessPlayer();
-      
-    } else {
-      console.warn('No video banner section found on page');
-      fallbackVideoPlay(video);
     }
+    
+    // Start trying to access the player
+    tryAccessPlayer();
   }
 
   // Helper function to request fullscreen
@@ -479,14 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Fallback function for when video banner is not available
-  function fallbackVideoPlay(video) {
-    if (video.content && video.content.src) {
-      window.open(video.content.src, '_blank');
-    } else {
-      alert('Video source not available');
-    }
-  }
+
 
   // Remove video from My Stuff
   function removeFromMyStuff(videoId, videoTitle) {
@@ -500,8 +536,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Save back to localStorage
         localStorage.setItem('myStuff', JSON.stringify(myStuff));
         
-        // Reload the display
-        loadMyStuff();
+        // Reload the display with force refresh
+        loadMyStuff(true);
         
         // Dispatch custom event to update other My Stuff sections and video banners
         window.dispatchEvent(new CustomEvent('myStuffUpdated'));
@@ -519,7 +555,9 @@ document.addEventListener('DOMContentLoaded', function() {
     clearButton.addEventListener('click', function() {
       if (confirm('Are you sure you want to clear all videos from My Stuff?')) {
         localStorage.removeItem('myStuff');
-        loadMyStuff();
+        loadMyStuff(true);
+        // Dispatch custom event to update other My Stuff sections
+        window.dispatchEvent(new CustomEvent('myStuffUpdated'));
       }
     });
   }
@@ -527,20 +565,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // Listen for storage changes (when videos are added from other sections)
   window.addEventListener('storage', function(e) {
     if (e.key === 'myStuff') {
-      loadMyStuff();
+      loadMyStuff(true);
     }
   });
 
   // Custom event listener for same-page updates
   window.addEventListener('myStuffUpdated', function() {
-    loadMyStuff();
+    loadMyStuff(true);
   });
 
   // Initial load
-  loadMyStuff();
+  loadMyStuff(true);
 
-  // Refresh every few seconds to catch changes from same page
-  setInterval(loadMyStuff, 2000);
+  // Refresh periodically but less frequently, and only if data has changed
+  setInterval(() => loadMyStuff(false), 5000);
 });
 </script>
 
