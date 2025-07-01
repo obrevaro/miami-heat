@@ -290,15 +290,93 @@ document.addEventListener('DOMContentLoaded', function() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  // Play video from My Stuff
+  // Play video from My Stuff - integrates with video banner player
   function playMyStuffVideo(video) {
-    // You can implement video playback here
-    // For now, we'll log the video data
     console.log('Playing video from My Stuff:', video);
     
-    // Optional: Open in new tab or trigger a modal
+    // Find video banner sections on the page
+    const videoBanners = document.querySelectorAll('[id^="VideoBanner-"]');
+    
+    if (videoBanners.length > 0) {
+      // Use the first video banner found
+      const videoBanner = videoBanners[0];
+      const sectionId = videoBanner.id.split('-')[1];
+      const playerId = `video-player-${sectionId}`;
+      
+      try {
+        // Get the Video.js player instance
+        const player = videojs(playerId);
+        
+        if (player && video.content && video.content.src) {
+          // Update video source
+          player.src({
+            src: video.content.src,
+            type: video.content.type || 'video/mp4'
+          });
+          
+          // Update overlay content
+          const titleElement = document.getElementById(`title-${sectionId}`);
+          const summaryElement = document.getElementById(`summary-${sectionId}`);
+          const metadataElement = document.getElementById(`metadata-${sectionId}`);
+          
+          if (titleElement) {
+            titleElement.textContent = video.title || 'Untitled';
+          }
+          
+          if (summaryElement) {
+            summaryElement.textContent = video.summary || '';
+          }
+          
+          if (metadataElement) {
+            const category = video.extensions?.category || 'Video';
+            const duration = video.extensions?.duration ? formatDuration(video.extensions.duration) : '--:--';
+            const provider = video.extensions?.provider || 'My Stuff';
+            
+            metadataElement.innerHTML = `
+              <span class="category">${category}</span>
+              <span class="duration">${duration}</span>
+              <span class="provider">${provider}</span>
+            `;
+          }
+          
+          // Scroll to video banner section
+          videoBanner.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          });
+          
+          // Enable controls and play
+          player.muted(false);
+          player.controls(true);
+          player.play().catch(err => {
+            console.log('Autoplay failed:', err);
+            // If autoplay fails, just ensure the video is ready
+            player.ready(() => {
+              console.log('Video ready to play');
+            });
+          });
+          
+          console.log('Video loaded in banner player:', video.title);
+        } else {
+          console.warn('Video player not found or no video source available');
+          fallbackVideoPlay(video);
+        }
+      } catch (error) {
+        console.error('Error updating video banner:', error);
+        fallbackVideoPlay(video);
+      }
+    } else {
+      console.warn('No video banner section found on page');
+      fallbackVideoPlay(video);
+    }
+  }
+  
+  // Fallback function for when video banner is not available
+  function fallbackVideoPlay(video) {
     if (video.content && video.content.src) {
       window.open(video.content.src, '_blank');
+    } else {
+      alert('Video source not available');
     }
   }
 
