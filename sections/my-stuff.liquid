@@ -367,9 +367,9 @@ document.addEventListener('DOMContentLoaded', function() {
       try {
         // Check if videojs is available
         if (typeof videojs === 'undefined') {
-          console.warn('Video.js not loaded yet, retrying...');
-          if (attempts < 10) {
-            setTimeout(() => tryAccessPlayer(attempts + 1), 200);
+          console.warn('Video.js not loaded yet, retrying...', `attempt ${attempts + 1}/15`);
+          if (attempts < 15) {
+            setTimeout(() => tryAccessPlayer(attempts + 1), 300);
             return;
           } else {
             console.error('Video.js failed to load after multiple attempts');
@@ -377,29 +377,82 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
 
+        // Debug: Log what we're looking for
+        console.log('Searching for video players...');
+        
         // Find all video players on the page
         const allPlayers = [];
         
-        // Look for video banner sections
+        // Method 1: Look for video banner sections
         const videoBanners = document.querySelectorAll('[id^="VideoBanner-"]');
+        console.log('Found video banners:', videoBanners.length);
         videoBanners.forEach(banner => {
+          console.log('Video banner found:', banner.id);
           const sectionId = banner.id.split('-')[1];
           const playerId = `video-player-${sectionId}`;
-          if (document.getElementById(playerId)) {
+          const playerElement = document.getElementById(playerId);
+          console.log(`Looking for player with ID: ${playerId}`, playerElement);
+          if (playerElement) {
             allPlayers.push({ playerId, sectionId, banner });
+            console.log('Added video banner player:', playerId);
           }
         });
         
-        // Look for any other video.js players
-        const videoElements = document.querySelectorAll('video[data-vjs-player]');
+        // Method 2: Look for any video elements with Video.js class
+        const videoElements = document.querySelectorAll('video.video-js');
+        console.log('Found video.js elements:', videoElements.length);
         videoElements.forEach(videoEl => {
+          console.log('Video.js element found:', videoEl.id, videoEl);
           if (videoEl.id && !allPlayers.find(p => p.playerId === videoEl.id)) {
             allPlayers.push({ playerId: videoEl.id, sectionId: null, banner: null });
+            console.log('Added video.js player:', videoEl.id);
           }
         });
+        
+        // Method 3: Look for any video elements with data-vjs-player
+        const vidiElements = document.querySelectorAll('video[data-vjs-player]');
+        console.log('Found data-vjs-player elements:', vidiElements.length);
+        vidiElements.forEach(videoEl => {
+          console.log('data-vjs-player element found:', videoEl.id, videoEl);
+          if (videoEl.id && !allPlayers.find(p => p.playerId === videoEl.id)) {
+            allPlayers.push({ playerId: videoEl.id, sectionId: null, banner: null });
+            console.log('Added data-vjs-player:', videoEl.id);
+          }
+        });
+        
+        // Method 4: Look for any video elements at all
+        const allVideoElements = document.querySelectorAll('video');
+        console.log('Found all video elements:', allVideoElements.length);
+        allVideoElements.forEach((videoEl, index) => {
+          console.log(`Video element ${index}:`, videoEl.id, videoEl.className, videoEl);
+          if (videoEl.id && !allPlayers.find(p => p.playerId === videoEl.id)) {
+            // Check if it's a video.js player by looking for the videojs method
+            try {
+              if (typeof videojs !== 'undefined' && videojs.getPlayer && videojs.getPlayer(videoEl.id)) {
+                allPlayers.push({ playerId: videoEl.id, sectionId: null, banner: null });
+                console.log('Added generic video player:', videoEl.id);
+              }
+            } catch (e) {
+              console.log('Not a video.js player:', videoEl.id);
+            }
+          }
+        });
+        
+        console.log('Total players found:', allPlayers.length, allPlayers);
         
         if (allPlayers.length === 0) {
           console.warn('No video players found on page');
+          
+          // Last resort: try to find ANY element that might be a video player
+          const possiblePlayers = document.querySelectorAll('[id*="player"], [id*="video"], [class*="video"]');
+          console.log('Possible video players found:', possiblePlayers.length);
+          possiblePlayers.forEach((el, index) => {
+            console.log(`Possible player ${index}:`, el.id, el.className, el.tagName);
+          });
+          
+          // Ultimate fallback: create a simple fullscreen video player
+          console.log('Creating fallback video player...');
+          createFallbackVideoPlayer(video);
           return;
         }
         
@@ -499,6 +552,126 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start trying to access the player
     tryAccessPlayer();
+  }
+
+  // Fallback video player when no video.js players are found
+  function createFallbackVideoPlayer(video) {
+    console.log('Creating fallback player for:', video.title);
+    
+    if (!video.content || !video.content.src) {
+      console.error('No video source available');
+      alert('Video source not available');
+      return;
+    }
+    
+    // Create a fullscreen video overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    `;
+    
+    // Create video element
+    const videoElement = document.createElement('video');
+    videoElement.style.cssText = `
+      max-width: 90vw;
+      max-height: 80vh;
+      width: auto;
+      height: auto;
+    `;
+    videoElement.controls = true;
+    videoElement.autoplay = true;
+    videoElement.src = video.content.src;
+    
+    // Create video title
+    const titleElement = document.createElement('div');
+    titleElement.style.cssText = `
+      color: white;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      text-align: center;
+      max-width: 90vw;
+    `;
+    titleElement.textContent = video.title || 'Video';
+    
+    // Create close button
+    const closeButton = document.createElement('button');
+    closeButton.style.cssText = `
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      font-size: 2rem;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+    `;
+    closeButton.innerHTML = '×';
+    closeButton.title = 'Close';
+    
+    // Close button hover effect
+    closeButton.addEventListener('mouseenter', () => {
+      closeButton.style.background = 'rgba(255, 255, 255, 0.4)';
+    });
+    closeButton.addEventListener('mouseleave', () => {
+      closeButton.style.background = 'rgba(255, 255, 255, 0.2)';
+    });
+    
+    // Close functionality
+    function closePlayer() {
+      videoElement.pause();
+      document.body.removeChild(overlay);
+      document.removeEventListener('keydown', handleKeydown);
+    }
+    
+    closeButton.addEventListener('click', closePlayer);
+    
+    // Close on Escape key
+    function handleKeydown(e) {
+      if (e.key === 'Escape') {
+        closePlayer();
+      }
+    }
+    document.addEventListener('keydown', handleKeydown);
+    
+    // Close when clicking outside video
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        closePlayer();
+      }
+    });
+    
+    // Assemble the player
+    overlay.appendChild(titleElement);
+    overlay.appendChild(videoElement);
+    overlay.appendChild(closeButton);
+    
+    // Add to page
+    document.body.appendChild(overlay);
+    
+    // Try to play the video
+    videoElement.play().catch(err => {
+      console.log('Autoplay failed in fallback player:', err);
+    });
+    
+    console.log('Fallback video player created and playing');
   }
 
   // Helper function to request fullscreen
