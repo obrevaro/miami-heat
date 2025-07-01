@@ -11,6 +11,14 @@
     height: {{ section.settings.video_height }}vh;
     overflow: hidden;
     background-color: #000;
+    margin-top: {{ section.settings.container_margin_top }}px;
+    margin-bottom: {{ section.settings.container_margin_bottom }}px;
+    margin-left: {{ section.settings.container_margin_left }}px;
+    margin-right: {{ section.settings.container_margin_right }}px;
+    padding-top: {{ section.settings.container_padding_top }}px;
+    padding-bottom: {{ section.settings.container_padding_bottom }}px;
+    padding-left: {{ section.settings.container_padding_left }}px;
+    padding-right: {{ section.settings.container_padding_right }}px;
   }
 
   #VideoBanner-{{ section.id }} .video-js {
@@ -34,28 +42,37 @@
 
   #VideoBanner-{{ section.id }} .content-overlay {
     position: absolute;
-    bottom: 0;
+    {{ section.settings.text_position }}: 0;
     left: 0;
     right: 0;
-    padding: 2rem;
+    padding-top: {{ section.settings.text_padding_top }}px;
+    padding-bottom: {{ section.settings.text_padding_bottom }}px;
+    padding-left: {{ section.settings.text_padding_left }}px;
+    padding-right: {{ section.settings.text_padding_right }}px;
+    margin-top: {{ section.settings.text_margin_top }}px;
+    margin-bottom: {{ section.settings.text_margin_bottom }}px;
+    margin-left: {{ section.settings.text_margin_left }}px;
+    margin-right: {{ section.settings.text_margin_right }}px;
     background: linear-gradient(transparent, rgba(0,0,0,0.8));
     z-index: 20;
-    color: white;
+    color: {{ section.settings.text_color }};
   }
 
   #VideoBanner-{{ section.id }} .content-overlay h1 {
-    font-size: 3rem;
-    font-weight: bold;
+    font-size: {{ section.settings.title_font_size }}px;
+    font-weight: {{ section.settings.title_font_weight }};
     margin-bottom: 1rem;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    color: {{ section.settings.title_color }};
   }
 
   #VideoBanner-{{ section.id }} .content-overlay .summary {
-    font-size: 1.2rem;
+    font-size: {{ section.settings.summary_font_size }}px;
     line-height: 1.6;
     margin-bottom: 1.5rem;
-    max-width: 60%;
+    max-width: {{ section.settings.summary_max_width }}%;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    color: {{ section.settings.summary_color }};
   }
 
   #VideoBanner-{{ section.id }} .content-overlay .metadata {
@@ -138,6 +155,11 @@
   class="video-banner{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--fade-in{% endif %}"
   data-refresh-interval="{{ section.settings.refresh_interval | default: 30 }}"
   data-api-url="{{ section.settings.api_url | default: 'https://winoapi.replit.app/?random=true' }}"
+  data-title-source="{{ section.settings.title_data_source | default: 'title' }}"
+  data-summary-source="{{ section.settings.summary_data_source | default: 'summary' }}"
+  data-category-source="{{ section.settings.category_data_source | default: 'extensions.category' }}"
+  data-duration-source="{{ section.settings.duration_data_source | default: 'extensions.duration' }}"
+  data-provider-source="{{ section.settings.provider_data_source | default: 'extensions.provider' }}"
 >
   <!-- Video Element -->
   <video
@@ -181,9 +203,9 @@
           ▶ Play
         </button>
       {%- endif -%}
-      {%- if section.settings.show_info_button -%}
-        <button class="btn btn-secondary" id="info-btn-{{ section.id }}">
-          ℹ More Info
+      {%- if section.settings.show_add_button -%}
+        <button class="btn btn-secondary" id="add-btn-{{ section.id }}">
+          + Add to My Stuff
         </button>
       {%- endif -%}
     </div>
@@ -196,9 +218,16 @@ document.addEventListener('DOMContentLoaded', function() {
   const playerId = 'video-player-{{ section.id }}';
   const refreshInterval = parseInt(videoBanner.dataset.refreshInterval) * 1000; // Convert seconds to milliseconds
   const apiUrl = videoBanner.dataset.apiUrl;
+  const titleSource = videoBanner.dataset.titleSource || 'title';
+  const summarySource = videoBanner.dataset.summarySource || 'summary';
+  const categorySource = videoBanner.dataset.categorySource || 'extensions.category';
+  const durationSource = videoBanner.dataset.durationSource || 'extensions.duration';
+  const providerSource = videoBanner.dataset.providerSource || 'extensions.provider';
   let player;
   let currentVideoData = null;
   let userInteracted = false;
+  let refreshIntervalId = null;
+  let isFullscreen = false;
 
   // Initialize Video.js player
   function initPlayer() {
@@ -228,18 +257,47 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
+    // Handle fullscreen events
+    player.on('fullscreenchange', function() {
+      isFullscreen = player.isFullscreen();
+      
+      if (isFullscreen) {
+        // User entered fullscreen - stop content refresh
+        stopContentRefresh();
+        console.log('Entered fullscreen - content refresh paused');
+      } else {
+        // User exited fullscreen - optionally restart content refresh
+        // Uncomment the line below if you want to resume content refresh after fullscreen
+        // startContentRefresh();
+        console.log('Exited fullscreen');
+      }
+    });
+
     // Handle play button click
     document.getElementById('play-btn-{{ section.id }}').addEventListener('click', function() {
       userInteracted = true;
       player.muted(false);
       player.controls(true);
       player.play();
+      
+      // Request fullscreen
+      if (player.requestFullscreen) {
+        player.requestFullscreen();
+      } else if (player.el().requestFullscreen) {
+        player.el().requestFullscreen();
+      } else if (player.el().webkitRequestFullscreen) {
+        player.el().webkitRequestFullscreen();
+      } else if (player.el().mozRequestFullScreen) {
+        player.el().mozRequestFullScreen();
+      } else if (player.el().msRequestFullscreen) {
+        player.el().msRequestFullscreen();
+      }
     });
 
-    // Handle info button click
-    document.getElementById('info-btn-{{ section.id }}').addEventListener('click', function() {
+    // Handle add to my stuff button click
+    document.getElementById('add-btn-{{ section.id }}').addEventListener('click', function() {
       if (currentVideoData) {
-        showContentInfo(currentVideoData);
+        addToMyStuff(currentVideoData);
       }
     });
 
@@ -262,11 +320,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Helper function to get nested object property by path
+  function getNestedValue(obj, path) {
+    return path.split('.').reduce((current, key) => current && current[key], obj);
+  }
+
   // Update video content
   function updateVideoContent(videoData) {
     if (!player) return;
 
-    const { content, extensions, summary, title, media_group } = videoData;
+    const { content } = videoData;
     
     // Update video source
     if (content && content.src) {
@@ -276,20 +339,25 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
+    // Get content using configurable data sources
+    const titleValue = getNestedValue(videoData, titleSource) || 'Untitled';
+    const summaryValue = getNestedValue(videoData, summarySource) || '';
+    const categoryValue = getNestedValue(videoData, categorySource) || 'Video';
+    const durationValue = getNestedValue(videoData, durationSource);
+    const providerValue = getNestedValue(videoData, providerSource) || 'Unknown';
+
     // Update overlay content
-    document.getElementById('title-{{ section.id }}').textContent = title || 'Untitled';
-    document.getElementById('summary-{{ section.id }}').textContent = summary || '';
+    document.getElementById('title-{{ section.id }}').textContent = titleValue;
+    document.getElementById('summary-{{ section.id }}').textContent = summaryValue;
     
     // Update metadata
     const metadataContainer = document.getElementById('metadata-{{ section.id }}');
-    const category = extensions?.category || 'Video';
-    const duration = extensions?.duration ? formatDuration(extensions.duration) : '--:--';
-    const provider = extensions?.provider || 'Unknown';
+    const formattedDuration = durationValue ? formatDuration(durationValue) : '--:--';
     
     metadataContainer.innerHTML = `
-      <span class="category">${category}</span>
-      <span class="duration">${duration}</span>
-      <span class="provider">${provider}</span>
+      <span class="category">${categoryValue}</span>
+      <span class="duration">${formattedDuration}</span>
+      <span class="provider">${providerValue}</span>
     `;
 
     // Reset mute state for new content if user hasn't interacted
@@ -306,16 +374,80 @@ document.addEventListener('DOMContentLoaded', function() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  // Show content info modal (you can customize this)
-  function showContentInfo(videoData) {
-    const info = `
-Title: ${videoData.title}
-Summary: ${videoData.summary}
-Category: ${videoData.extensions?.category || 'N/A'}
-Provider: ${videoData.extensions?.provider || 'N/A'}
-Duration: ${videoData.extensions?.duration ? formatDuration(videoData.extensions.duration) : 'N/A'}
-    `;
-    alert(info); // Replace with a proper modal implementation
+  // Add video to My Stuff (localStorage)
+  function addToMyStuff(videoData) {
+    try {
+      // Get existing my stuff from localStorage
+      let myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+      
+      // Check if video already exists (prevent duplicates)
+      const existingIndex = myStuff.findIndex(item => item.id === videoData.id);
+      
+      if (existingIndex === -1) {
+        // Add new video to the beginning of the array
+        myStuff.unshift({
+          id: videoData.id,
+          title: videoData.title,
+          summary: videoData.summary,
+          content: videoData.content,
+          extensions: videoData.extensions,
+          media_group: videoData.media_group,
+          addedAt: Date.now()
+        });
+        
+        // Save back to localStorage
+        localStorage.setItem('myStuff', JSON.stringify(myStuff));
+        
+        // Dispatch custom event to update My Stuff sections
+        window.dispatchEvent(new CustomEvent('myStuffUpdated'));
+        
+        // Update button text temporarily to show success
+        const addBtn = document.getElementById('add-btn-{{ section.id }}');
+        const originalText = addBtn.textContent;
+        addBtn.textContent = '✓ Added to My Stuff';
+        addBtn.style.background = '#28a745';
+        
+        setTimeout(() => {
+          addBtn.textContent = originalText;
+          addBtn.style.background = '';
+        }, 2000);
+        
+        console.log('Video added to My Stuff:', videoData.title);
+      } else {
+        // Video already exists
+        const addBtn = document.getElementById('add-btn-{{ section.id }}');
+        const originalText = addBtn.textContent;
+        addBtn.textContent = '✓ Already in My Stuff';
+        addBtn.style.background = '#ffc107';
+        
+        setTimeout(() => {
+          addBtn.textContent = originalText;
+          addBtn.style.background = '';
+        }, 2000);
+        
+        console.log('Video already in My Stuff:', videoData.title);
+      }
+    } catch (error) {
+      console.error('Error adding to My Stuff:', error);
+      alert('Error adding video to My Stuff');
+    }
+  }
+
+  // Start content refresh interval
+  function startContentRefresh() {
+    if (refreshInterval > 0 && !refreshIntervalId) {
+      refreshIntervalId = setInterval(fetchContent, refreshInterval);
+      console.log('Content refresh started');
+    }
+  }
+
+  // Stop content refresh interval
+  function stopContentRefresh() {
+    if (refreshIntervalId) {
+      clearInterval(refreshIntervalId);
+      refreshIntervalId = null;
+      console.log('Content refresh stopped');
+    }
   }
 
   // Initialize everything
@@ -325,12 +457,11 @@ Duration: ${videoData.extensions?.duration ? formatDuration(videoData.extensions
   fetchContent();
   
   // Set up refresh interval
-  if (refreshInterval > 0) {
-    setInterval(fetchContent, refreshInterval);
-  }
+  startContentRefresh();
 
   // Clean up on page unload
   window.addEventListener('beforeunload', function() {
+    stopContentRefresh();
     if (player) {
       player.dispose();
     }
@@ -391,6 +522,321 @@ Duration: ${videoData.extensions?.duration ? formatDuration(videoData.extensions
     },
     {
       "type": "header",
+      "content": "Container Spacing"
+    },
+    {
+      "type": "range",
+      "id": "container_margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Top Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Bottom Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_margin_left",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Left Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_margin_right",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Right Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Top Padding",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Bottom Padding",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_padding_left",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Left Padding",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "container_padding_right",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Right Padding",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Text Container Settings"
+    },
+    {
+      "type": "select",
+      "id": "text_position",
+      "options": [
+        {
+          "value": "top",
+          "label": "Top"
+        },
+        {
+          "value": "bottom",
+          "label": "Bottom"
+        }
+      ],
+      "default": "bottom",
+      "label": "Text Position"
+    },
+    {
+      "type": "range",
+      "id": "text_margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Top Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "text_margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Bottom Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "text_margin_left",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Left Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "text_margin_right",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Right Margin",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "text_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Top Padding",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "text_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Bottom Padding",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "text_padding_left",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Left Padding",
+      "default": 30
+    },
+    {
+      "type": "range",
+      "id": "text_padding_right",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Text Right Padding",
+      "default": 30
+    },
+    {
+      "type": "header",
+      "content": "Title Settings"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "min": 16,
+      "max": 80,
+      "step": 2,
+      "unit": "px",
+      "label": "Title Font Size",
+      "default": 48
+    },
+    {
+      "type": "select",
+      "id": "title_font_weight",
+      "options": [
+        {
+          "value": "300",
+          "label": "Light"
+        },
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi Bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        },
+        {
+          "value": "800",
+          "label": "Extra Bold"
+        }
+      ],
+      "default": "700",
+      "label": "Title Font Weight"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Summary Settings"
+    },
+    {
+      "type": "range",
+      "id": "summary_font_size",
+      "min": 12,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Summary Font Size",
+      "default": 19
+    },
+    {
+      "type": "color",
+      "id": "summary_color",
+      "label": "Summary Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "summary_max_width",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Summary Max Width",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "General Text Settings"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "General Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Data Source Mapping"
+    },
+    {
+      "type": "text",
+      "id": "title_data_source",
+      "label": "Title Data Source",
+      "default": "title",
+      "info": "API field path for title (e.g. 'title', 'extensions.series', 'summary')"
+    },
+    {
+      "type": "text",
+      "id": "summary_data_source",
+      "label": "Summary Data Source",
+      "default": "summary",
+      "info": "API field path for summary (e.g. 'summary', 'extensions.description', 'title')"
+    },
+    {
+      "type": "text",
+      "id": "category_data_source",
+      "label": "Category Data Source",
+      "default": "extensions.category",
+      "info": "API field path for category (e.g. 'extensions.category', 'extensions.provider')"
+    },
+    {
+      "type": "text",
+      "id": "duration_data_source",
+      "label": "Duration Data Source",
+      "default": "extensions.duration",
+      "info": "API field path for duration (e.g. 'extensions.duration')"
+    },
+    {
+      "type": "text",
+      "id": "provider_data_source",
+      "label": "Provider Data Source",
+      "default": "extensions.provider",
+      "info": "API field path for provider (e.g. 'extensions.provider', 'extensions.category')"
+    },
+    {
+      "type": "header",
       "content": "Content Overlay"
     },
     {
@@ -401,9 +847,9 @@ Duration: ${videoData.extensions?.duration ? formatDuration(videoData.extensions
     },
     {
       "type": "checkbox",
-      "id": "show_info_button",
+      "id": "show_add_button",
       "default": true,
-      "label": "Show Info Button"
+      "label": "Show Add to My Stuff Button"
     }
   ],
   "presets": [
