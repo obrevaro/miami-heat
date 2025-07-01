@@ -126,6 +126,16 @@
     background: rgba(255,255,255,0.4);
   }
 
+  #VideoBanner-{{ section.id }} .content-overlay .btn-success {
+    background: #28a745;
+    color: white;
+  }
+
+  #VideoBanner-{{ section.id }} .content-overlay .btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+  }
+
   @media screen and (max-width: 768px) {
     #VideoBanner-{{ section.id }} {
       height: {{ section.settings.mobile_video_height }}vh;
@@ -300,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle add to my stuff button click
     document.getElementById('add-btn-{{ section.id }}').addEventListener('click', function() {
       if (currentVideoData) {
-        addToMyStuff(currentVideoData);
+        toggleMyStuff(currentVideoData);
       }
     });
 
@@ -398,6 +408,9 @@ document.addEventListener('DOMContentLoaded', function() {
       player.muted(true);
       player.controls(false);
     }
+
+    // Update Add to My Stuff button state
+    updateMyStuffButtonState();
   }
 
   // Format duration from seconds to MM:SS
@@ -407,13 +420,48 @@ document.addEventListener('DOMContentLoaded', function() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  // Add video to My Stuff (localStorage)
-  function addToMyStuff(videoData) {
+  // Check if current video is in My Stuff
+  function isVideoInMyStuff(videoData) {
+    if (!videoData || !videoData.id) return false;
+    
     try {
-      // Get existing my stuff from localStorage
+      const myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+      return myStuff.some(item => item.id === videoData.id);
+    } catch (error) {
+      console.error('Error checking My Stuff:', error);
+      return false;
+    }
+  }
+
+  // Update My Stuff button state based on current video
+  function updateMyStuffButtonState() {
+    const addBtn = document.getElementById('add-btn-{{ section.id }}');
+    if (!addBtn || !currentVideoData) return;
+
+    const isInMyStuff = isVideoInMyStuff(currentVideoData);
+    
+    if (isInMyStuff) {
+      addBtn.textContent = '✓ In My Stuff';
+      addBtn.className = 'btn btn-success';
+      addBtn.style.background = '#28a745';
+      addBtn.title = 'Click to remove from My Stuff';
+    } else {
+      addBtn.textContent = '+ Add to My Stuff';
+      addBtn.className = 'btn btn-secondary';
+      addBtn.style.background = '';
+      addBtn.title = 'Click to add to My Stuff';
+    }
+  }
+
+  // Add or remove video from My Stuff (localStorage)
+  function toggleMyStuff(videoData) {
+    if (!videoData || !videoData.id) {
+      console.error('Invalid video data');
+      return;
+    }
+
+    try {
       let myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
-      
-      // Check if video already exists (prevent duplicates)
       const existingIndex = myStuff.findIndex(item => item.id === videoData.id);
       
       if (existingIndex === -1) {
@@ -428,41 +476,42 @@ document.addEventListener('DOMContentLoaded', function() {
           addedAt: Date.now()
         });
         
-        // Save back to localStorage
-        localStorage.setItem('myStuff', JSON.stringify(myStuff));
+        console.log('Video added to My Stuff:', videoData.title);
         
-        // Dispatch custom event to update My Stuff sections
-        window.dispatchEvent(new CustomEvent('myStuffUpdated'));
-        
-        // Update button text temporarily to show success
+        // Show success feedback
         const addBtn = document.getElementById('add-btn-{{ section.id }}');
         const originalText = addBtn.textContent;
-        addBtn.textContent = '✓ Added to My Stuff';
+        addBtn.textContent = '✓ Added!';
         addBtn.style.background = '#28a745';
         
         setTimeout(() => {
-          addBtn.textContent = originalText;
-          addBtn.style.background = '';
-        }, 2000);
+          updateMyStuffButtonState();
+        }, 1000);
         
-        console.log('Video added to My Stuff:', videoData.title);
       } else {
-        // Video already exists
+        // Remove video from My Stuff
+        myStuff.splice(existingIndex, 1);
+        console.log('Video removed from My Stuff:', videoData.title);
+        
+        // Show removal feedback
         const addBtn = document.getElementById('add-btn-{{ section.id }}');
-        const originalText = addBtn.textContent;
-        addBtn.textContent = '✓ Already in My Stuff';
-        addBtn.style.background = '#ffc107';
+        addBtn.textContent = 'Removed';
+        addBtn.style.background = '#dc3545';
         
         setTimeout(() => {
-          addBtn.textContent = originalText;
-          addBtn.style.background = '';
-        }, 2000);
-        
-        console.log('Video already in My Stuff:', videoData.title);
+          updateMyStuffButtonState();
+        }, 1000);
       }
+      
+      // Save back to localStorage
+      localStorage.setItem('myStuff', JSON.stringify(myStuff));
+      
+      // Dispatch custom event to update My Stuff sections
+      window.dispatchEvent(new CustomEvent('myStuffUpdated'));
+      
     } catch (error) {
-      console.error('Error adding to My Stuff:', error);
-      alert('Error adding video to My Stuff');
+      console.error('Error toggling My Stuff:', error);
+      alert('Error updating My Stuff');
     }
   }
 
@@ -492,6 +541,11 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up refresh interval
   startContentRefresh();
 
+  // Initial button state update (in case page loads with content)
+  setTimeout(() => {
+    updateMyStuffButtonState();
+  }, 500);
+
   // Listen for My Stuff updates (when videos are added/removed)
   window.addEventListener('myStuffUpdated', function() {
     if (videoBanner.dataset.useMyStuff === 'true') {
@@ -500,6 +554,9 @@ document.addEventListener('DOMContentLoaded', function() {
       myStuffVideos = [];
       fetchContent();
     }
+    
+    // Always update button state when My Stuff changes
+    updateMyStuffButtonState();
   });
 
   // Clean up on page unload

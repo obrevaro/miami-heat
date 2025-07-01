@@ -346,71 +346,136 @@ document.addEventListener('DOMContentLoaded', function() {
       const sectionId = videoBanner.id.split('-')[1];
       const playerId = `video-player-${sectionId}`;
       
-      try {
-        // Get the Video.js player instance
-        const player = videojs(playerId);
-        
-        if (player && video.content && video.content.src) {
-          // Update video source
-          player.src({
-            src: video.content.src,
-            type: video.content.type || 'video/mp4'
-          });
-          
-          // Update overlay content
-          const titleElement = document.getElementById(`title-${sectionId}`);
-          const summaryElement = document.getElementById(`summary-${sectionId}`);
-          const metadataElement = document.getElementById(`metadata-${sectionId}`);
-          
-          if (titleElement) {
-            titleElement.textContent = video.title || 'Untitled';
+      // Function to try accessing the player with retries
+      function tryAccessPlayer(attempts = 0) {
+        try {
+          // Check if videojs is available
+          if (typeof videojs === 'undefined') {
+            console.warn('Video.js not loaded yet, retrying...');
+            if (attempts < 5) {
+              setTimeout(() => tryAccessPlayer(attempts + 1), 500);
+              return;
+            } else {
+              console.error('Video.js failed to load after multiple attempts');
+              fallbackVideoPlay(video);
+              return;
+            }
           }
+
+          // Get the Video.js player instance
+          const player = videojs(playerId);
           
-          if (summaryElement) {
-            summaryElement.textContent = video.summary || '';
-          }
-          
-          if (metadataElement) {
-            const category = video.extensions?.category || 'Video';
-            const duration = video.extensions?.duration ? formatDuration(video.extensions.duration) : '--:--';
-            const provider = video.extensions?.provider || 'My Stuff';
+          if (player && video.content && video.content.src) {
+            console.log('Found video player, updating content...');
             
-            metadataElement.innerHTML = `
-              <span class="category">${category}</span>
-              <span class="duration">${duration}</span>
-              <span class="provider">${provider}</span>
-            `;
-          }
-          
-          // Scroll to video banner section
-          videoBanner.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
-          });
-          
-          // Enable controls and play
-          player.muted(false);
-          player.controls(true);
-          player.play().catch(err => {
-            console.log('Autoplay failed:', err);
-            // If autoplay fails, just ensure the video is ready
-            player.ready(() => {
-              console.log('Video ready to play');
+            // Update video source
+            player.src({
+              src: video.content.src,
+              type: video.content.type || 'video/mp4'
             });
-          });
-          
-          console.log('Video loaded in banner player:', video.title);
-        } else {
-          console.warn('Video player not found or no video source available');
-          fallbackVideoPlay(video);
+            
+            // Update overlay content
+            const titleElement = document.getElementById(`title-${sectionId}`);
+            const summaryElement = document.getElementById(`summary-${sectionId}`);
+            const metadataElement = document.getElementById(`metadata-${sectionId}`);
+            
+            if (titleElement) {
+              titleElement.textContent = video.title || 'Untitled';
+            }
+            
+            if (summaryElement) {
+              summaryElement.textContent = video.summary || '';
+            }
+            
+            if (metadataElement) {
+              const category = video.extensions?.category || 'Video';
+              const duration = video.extensions?.duration ? formatDuration(video.extensions.duration) : '--:--';
+              const provider = video.extensions?.provider || 'My Stuff';
+              
+              metadataElement.innerHTML = `
+                <span class="category">${category}</span>
+                <span class="duration">${duration}</span>
+                <span class="provider">${provider}</span>
+              `;
+            }
+            
+            // Scroll to video banner section first
+            videoBanner.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            
+            // Wait for scroll to complete, then play and go fullscreen
+            setTimeout(() => {
+              // Enable controls and unmute
+              player.muted(false);
+              player.controls(true);
+              
+              // Play the video
+              player.play().then(() => {
+                console.log('Video playing, attempting fullscreen...');
+                
+                // Request fullscreen after a short delay
+                setTimeout(() => {
+                  requestPlayerFullscreen(player);
+                }, 500);
+                
+              }).catch(err => {
+                console.log('Autoplay failed:', err);
+                // Still try to go fullscreen even if autoplay fails
+                setTimeout(() => {
+                  requestPlayerFullscreen(player);
+                }, 500);
+              });
+              
+            }, 800); // Wait for scroll animation
+            
+            console.log('Video loaded in banner player:', video.title);
+          } else {
+            console.warn('Video player not ready or no video source available');
+            if (attempts < 3) {
+              setTimeout(() => tryAccessPlayer(attempts + 1), 1000);
+            } else {
+              fallbackVideoPlay(video);
+            }
+          }
+        } catch (error) {
+          console.error('Error updating video banner:', error);
+          if (attempts < 3) {
+            setTimeout(() => tryAccessPlayer(attempts + 1), 1000);
+          } else {
+            fallbackVideoPlay(video);
+          }
         }
-      } catch (error) {
-        console.error('Error updating video banner:', error);
-        fallbackVideoPlay(video);
       }
+      
+      // Start trying to access the player
+      tryAccessPlayer();
+      
     } else {
       console.warn('No video banner section found on page');
       fallbackVideoPlay(video);
+    }
+  }
+
+  // Helper function to request fullscreen
+  function requestPlayerFullscreen(player) {
+    try {
+      if (player.requestFullscreen) {
+        player.requestFullscreen();
+      } else if (player.el() && player.el().requestFullscreen) {
+        player.el().requestFullscreen();
+      } else if (player.el() && player.el().webkitRequestFullscreen) {
+        player.el().webkitRequestFullscreen();
+      } else if (player.el() && player.el().mozRequestFullScreen) {
+        player.el().mozRequestFullScreen();
+      } else if (player.el() && player.el().msRequestFullscreen) {
+        player.el().msRequestFullscreen();
+      } else {
+        console.warn('Fullscreen not supported');
+      }
+    } catch (error) {
+      console.error('Error requesting fullscreen:', error);
     }
   }
   
