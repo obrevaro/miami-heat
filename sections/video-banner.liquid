@@ -155,6 +155,7 @@
   class="video-banner{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--fade-in{% endif %}"
   data-refresh-interval="{{ section.settings.refresh_interval | default: 30 }}"
   data-api-url="{{ section.settings.api_url | default: 'https://winoapi.replit.app/?random=true' }}"
+  data-use-my-stuff="{{ section.settings.use_my_stuff | default: false }}"
   data-title-source="{{ section.settings.title_data_source | default: 'title' }}"
   data-summary-source="{{ section.settings.summary_data_source | default: 'summary' }}"
   data-category-source="{{ section.settings.category_data_source | default: 'extensions.category' }}"
@@ -228,6 +229,8 @@ document.addEventListener('DOMContentLoaded', function() {
   let userInteracted = false;
   let refreshIntervalId = null;
   let isFullscreen = false;
+  let myStuffIndex = 0;
+  let myStuffVideos = [];
 
   // Initialize Video.js player
   function initPlayer() {
@@ -304,19 +307,49 @@ document.addEventListener('DOMContentLoaded', function() {
     return player;
   }
 
-  // Fetch content from API
+  // Fetch content from API or My Stuff
   async function fetchContent() {
-    try {
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      
-      if (data.entry && data.entry.length > 0) {
-        const videoEntry = data.entry[0];
-        currentVideoData = videoEntry;
-        updateVideoContent(videoEntry);
+    const useMyStuff = videoBanner.dataset.useMyStuff === 'true';
+    
+    if (useMyStuff) {
+      fetchFromMyStuff();
+    } else {
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data.entry && data.entry.length > 0) {
+          const videoEntry = data.entry[0];
+          currentVideoData = videoEntry;
+          updateVideoContent(videoEntry);
+        }
+      } catch (error) {
+        console.error('Error fetching video content:', error);
       }
+    }
+  }
+
+  // Fetch content from My Stuff localStorage
+  function fetchFromMyStuff() {
+    try {
+      myStuffVideos = JSON.parse(localStorage.getItem('myStuff') || '[]');
+      
+      if (myStuffVideos.length === 0) {
+        console.log('No videos in My Stuff');
+        return;
+      }
+
+      // Get current video from My Stuff list
+      const videoEntry = myStuffVideos[myStuffIndex];
+      currentVideoData = videoEntry;
+      updateVideoContent(videoEntry);
+
+      // Move to next video for next fetch (infinite loop)
+      myStuffIndex = (myStuffIndex + 1) % myStuffVideos.length;
+      
+      console.log(`Playing My Stuff video ${myStuffIndex + 1}/${myStuffVideos.length}: ${videoEntry.title}`);
     } catch (error) {
-      console.error('Error fetching video content:', error);
+      console.error('Error fetching from My Stuff:', error);
     }
   }
 
@@ -459,6 +492,16 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up refresh interval
   startContentRefresh();
 
+  // Listen for My Stuff updates (when videos are added/removed)
+  window.addEventListener('myStuffUpdated', function() {
+    if (videoBanner.dataset.useMyStuff === 'true') {
+      // Reset index to start from beginning when My Stuff changes
+      myStuffIndex = 0;
+      myStuffVideos = [];
+      fetchContent();
+    }
+  });
+
   // Clean up on page unload
   window.addEventListener('beforeunload', function() {
     stopContentRefresh();
@@ -488,6 +531,13 @@ document.addEventListener('DOMContentLoaded', function() {
       "label": "API URL",
       "default": "https://winoapi.replit.app/?random=true",
       "info": "URL to fetch video content from"
+    },
+    {
+      "type": "checkbox",
+      "id": "use_my_stuff",
+      "default": false,
+      "label": "Use My Stuff as Video Source",
+      "info": "When enabled, videos will be sourced from the user's My Stuff collection instead of the API. Videos will loop infinitely through the collection."
     },
     {
       "type": "range",

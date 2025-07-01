@@ -84,6 +84,37 @@
     transform: translateY(0);
   }
 
+  #MyStuff-{{ section.id }} .my-stuff-item-delete {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    background: rgba(220, 53, 69, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item:hover .my-stuff-item-delete {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item-delete:hover {
+    background: rgba(200, 35, 51, 1);
+    transform: scale(1.1);
+  }
+
   #MyStuff-{{ section.id }} .my-stuff-item-title {
     font-size: {{ section.settings.item_title_size }}px;
     font-weight: 600;
@@ -269,15 +300,27 @@ document.addEventListener('DOMContentLoaded', function() {
         class="my-stuff-item-image"
         loading="lazy"
       >
+      <button class="my-stuff-item-delete" data-video-id="${video.id}" title="Remove from My Stuff">
+        ×
+      </button>
       <div class="my-stuff-item-overlay">
         <div class="my-stuff-item-title">${video.title || 'Untitled'}</div>
         <div class="my-stuff-item-meta">${category}${duration ? ' • ' + duration : ''}</div>
       </div>
     `;
 
-    // Add click event to play video
-    item.addEventListener('click', function() {
-      playMyStuffVideo(video);
+    // Add click event to play video (but not on delete button)
+    item.addEventListener('click', function(e) {
+      if (!e.target.classList.contains('my-stuff-item-delete')) {
+        playMyStuffVideo(video);
+      }
+    });
+
+    // Add delete button functionality
+    const deleteButton = item.querySelector('.my-stuff-item-delete');
+    deleteButton.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent triggering video play
+      removeFromMyStuff(video.id, video.title);
     });
 
     return item;
@@ -377,6 +420,32 @@ document.addEventListener('DOMContentLoaded', function() {
       window.open(video.content.src, '_blank');
     } else {
       alert('Video source not available');
+    }
+  }
+
+  // Remove video from My Stuff
+  function removeFromMyStuff(videoId, videoTitle) {
+    if (confirm(`Remove "${videoTitle}" from My Stuff?`)) {
+      try {
+        let myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+        
+        // Filter out the video with the matching ID
+        myStuff = myStuff.filter(video => video.id !== videoId);
+        
+        // Save back to localStorage
+        localStorage.setItem('myStuff', JSON.stringify(myStuff));
+        
+        // Reload the display
+        loadMyStuff();
+        
+        // Dispatch custom event to update other My Stuff sections and video banners
+        window.dispatchEvent(new CustomEvent('myStuffUpdated'));
+        
+        console.log(`Removed "${videoTitle}" from My Stuff`);
+      } catch (error) {
+        console.error('Error removing from My Stuff:', error);
+        alert('Error removing video from My Stuff');
+      }
     }
   }
 
