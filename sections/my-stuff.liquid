@@ -1,0 +1,796 @@
+{{ 'section-my-stuff.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  #MyStuff-{{ section.id }} {
+    padding: {{ section.settings.section_padding_top }}px 0 {{ section.settings.section_padding_bottom }}px 0;
+    background-color: {{ section.settings.background_color }};
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 {{ section.settings.container_padding }}px;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-title {
+    font-size: {{ section.settings.title_font_size }}px;
+    font-weight: {{ section.settings.title_font_weight }};
+    color: {{ section.settings.title_color }};
+    margin-bottom: {{ section.settings.title_margin_bottom }}px;
+    text-align: {{ section.settings.title_alignment }};
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-rail {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: {{ section.settings.item_gap }}px;
+    padding: {{ section.settings.rail_padding }}px 0;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-rail::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-rail::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-rail::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 4px;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-rail::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.5);
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item {
+    flex: 0 0 {{ section.settings.item_width }}px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    border-radius: {{ section.settings.item_border_radius }}px;
+    overflow: hidden;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item:hover {
+    transform: scale(1.05);
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item-image {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: {{ section.settings.item_border_radius }}px;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    color: white;
+    padding: 1rem;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item:hover .my-stuff-item-overlay {
+    transform: translateY(0);
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item-delete {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    background: rgba(220, 53, 69, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item:hover .my-stuff-item-delete {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item-delete:hover {
+    background: rgba(200, 35, 51, 1);
+    transform: scale(1.1);
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item-title {
+    font-size: {{ section.settings.item_title_size }}px;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-item-meta {
+    font-size: {{ section.settings.item_meta_size }}px;
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: {{ section.settings.empty_text_color }};
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-empty-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-empty-text {
+    font-size: 1rem;
+    opacity: 0.7;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-count {
+    font-size: 0.9rem;
+    color: {{ section.settings.meta_text_color }};
+    opacity: 0.8;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-clear {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  #MyStuff-{{ section.id }} .my-stuff-clear:hover {
+    background: #c82333;
+  }
+
+  @media screen and (max-width: 768px) {
+    #MyStuff-{{ section.id }} .my-stuff-item {
+      flex: 0 0 {{ section.settings.mobile_item_width }}px;
+    }
+
+    #MyStuff-{{ section.id }} .my-stuff-title {
+      font-size: {{ section.settings.title_font_size | times: 0.8 }}px;
+    }
+
+    #MyStuff-{{ section.id }} .my-stuff-container {
+      padding: 0 {{ section.settings.container_padding | times: 0.5 }}px;
+    }
+  }
+{%- endstyle -%}
+
+<div
+  id="MyStuff-{{ section.id }}"
+  class="my-stuff-section{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--fade-in{% endif %}"
+>
+  <div class="my-stuff-container">
+    <div class="my-stuff-controls" id="my-stuff-controls-{{ section.id }}" style="display: none;">
+      <div>
+        <h2 class="my-stuff-title">{{ section.settings.section_title | default: "My Stuff" }}</h2>
+        <div class="my-stuff-count" id="my-stuff-count-{{ section.id }}"></div>
+      </div>
+      {%- if section.settings.show_clear_button -%}
+        <button class="my-stuff-clear" id="clear-my-stuff-{{ section.id }}">
+          Clear All
+        </button>
+      {%- endif -%}
+    </div>
+
+    <div class="my-stuff-rail" id="my-stuff-rail-{{ section.id }}">
+      <!-- Videos will be populated by JavaScript -->
+    </div>
+
+    <div class="my-stuff-empty" id="my-stuff-empty-{{ section.id }}">
+      <div class="my-stuff-empty-icon">📺</div>
+      <div class="my-stuff-empty-title">{{ section.settings.empty_title | default: "Your collection is empty" }}</div>
+      <div class="my-stuff-empty-text">{{ section.settings.empty_message | default: "Start adding videos to your collection by clicking the 'Add to My Stuff' button on videos you want to save." }}</div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const myStuffRail = document.getElementById('my-stuff-rail-{{ section.id }}');
+  const myStuffEmpty = document.getElementById('my-stuff-empty-{{ section.id }}');
+  const myStuffControls = document.getElementById('my-stuff-controls-{{ section.id }}');
+  const myStuffCount = document.getElementById('my-stuff-count-{{ section.id }}');
+  const clearButton = document.getElementById('clear-my-stuff-{{ section.id }}');
+
+  // Load and display My Stuff
+  function loadMyStuff() {
+    try {
+      const myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+      
+      if (myStuff.length === 0) {
+        myStuffEmpty.style.display = 'block';
+        myStuffControls.style.display = 'none';
+        myStuffRail.style.display = 'none';
+        return;
+      }
+
+      myStuffEmpty.style.display = 'none';
+      myStuffControls.style.display = 'flex';
+      myStuffRail.style.display = 'flex';
+      
+      // Update count
+      myStuffCount.textContent = `${myStuff.length} video${myStuff.length !== 1 ? 's' : ''}`;
+
+      // Clear existing items
+      myStuffRail.innerHTML = '';
+
+      // Add items to rail
+      myStuff.forEach((video, index) => {
+        const item = createMyStuffItem(video, index);
+        myStuffRail.appendChild(item);
+      });
+
+    } catch (error) {
+      console.error('Error loading My Stuff:', error);
+    }
+  }
+
+  // Create individual My Stuff item
+  function createMyStuffItem(video, index) {
+    const item = document.createElement('div');
+    item.className = 'my-stuff-item';
+    item.dataset.videoId = video.id;
+
+    // Get image from media_group
+    let imageSrc = '';
+    if (video.media_group && video.media_group[0] && video.media_group[0].media_item) {
+      const imageBase = video.media_group[0].media_item.find(item => item.key === 'image_base');
+      if (imageBase && imageBase.src) {
+        imageSrc = imageBase.src;
+      }
+    }
+
+    // Fallback to placeholder if no image
+    if (!imageSrc) {
+      imageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDIwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTUwIiBmaWxsPSIjNjY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+Tm8gSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==';
+    }
+
+    const category = video.extensions?.category || 'Video';
+    const duration = video.extensions?.duration ? formatDuration(video.extensions.duration) : '';
+
+    item.innerHTML = `
+      <img 
+        src="${imageSrc}" 
+        alt="${video.title || 'Video'}" 
+        class="my-stuff-item-image"
+        loading="lazy"
+      >
+      <button class="my-stuff-item-delete" data-video-id="${video.id}" title="Remove from My Stuff">
+        ×
+      </button>
+      <div class="my-stuff-item-overlay">
+        <div class="my-stuff-item-title">${video.title || 'Untitled'}</div>
+        <div class="my-stuff-item-meta">${category}${duration ? ' • ' + duration : ''}</div>
+      </div>
+    `;
+
+    // Add click event to play video (but not on delete button)
+    item.addEventListener('click', function(e) {
+      if (!e.target.classList.contains('my-stuff-item-delete')) {
+        playMyStuffVideo(video);
+      }
+    });
+
+    // Add delete button functionality
+    const deleteButton = item.querySelector('.my-stuff-item-delete');
+    deleteButton.addEventListener('click', function(e) {
+      e.stopPropagation(); // Prevent triggering video play
+      removeFromMyStuff(video.id, video.title);
+    });
+
+    return item;
+  }
+
+  // Format duration helper
+  function formatDuration(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Play video from My Stuff - integrates with video banner player
+  function playMyStuffVideo(video) {
+    console.log('Playing video from My Stuff:', video);
+    
+    // Find video banner sections on the page
+    const videoBanners = document.querySelectorAll('[id^="VideoBanner-"]');
+    
+    if (videoBanners.length > 0) {
+      // Use the first video banner found
+      const videoBanner = videoBanners[0];
+      const sectionId = videoBanner.id.split('-')[1];
+      const playerId = `video-player-${sectionId}`;
+      
+      // Function to try accessing the player with retries
+      function tryAccessPlayer(attempts = 0) {
+        try {
+          // Check if videojs is available
+          if (typeof videojs === 'undefined') {
+            console.warn('Video.js not loaded yet, retrying...');
+            if (attempts < 5) {
+              setTimeout(() => tryAccessPlayer(attempts + 1), 500);
+              return;
+            } else {
+              console.error('Video.js failed to load after multiple attempts');
+              fallbackVideoPlay(video);
+              return;
+            }
+          }
+
+          // Get the Video.js player instance
+          const player = videojs(playerId);
+          
+          if (player && video.content && video.content.src) {
+            console.log('Found video player, updating content...');
+            
+            // Update video source
+            player.src({
+              src: video.content.src,
+              type: video.content.type || 'video/mp4'
+            });
+            
+            // Update overlay content
+            const titleElement = document.getElementById(`title-${sectionId}`);
+            const summaryElement = document.getElementById(`summary-${sectionId}`);
+            const metadataElement = document.getElementById(`metadata-${sectionId}`);
+            
+            if (titleElement) {
+              titleElement.textContent = video.title || 'Untitled';
+            }
+            
+            if (summaryElement) {
+              summaryElement.textContent = video.summary || '';
+            }
+            
+            if (metadataElement) {
+              const category = video.extensions?.category || 'Video';
+              const duration = video.extensions?.duration ? formatDuration(video.extensions.duration) : '--:--';
+              const provider = video.extensions?.provider || 'My Stuff';
+              
+              metadataElement.innerHTML = `
+                <span class="category">${category}</span>
+                <span class="duration">${duration}</span>
+                <span class="provider">${provider}</span>
+              `;
+            }
+            
+            // Scroll to video banner section first
+            videoBanner.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+            
+            // Wait for scroll to complete, then play and go fullscreen
+            setTimeout(() => {
+              // Enable controls and unmute
+              player.muted(false);
+              player.controls(true);
+              
+              // Play the video
+              player.play().then(() => {
+                console.log('Video playing, attempting fullscreen...');
+                
+                // Request fullscreen after a short delay
+                setTimeout(() => {
+                  requestPlayerFullscreen(player);
+                }, 500);
+                
+              }).catch(err => {
+                console.log('Autoplay failed:', err);
+                // Still try to go fullscreen even if autoplay fails
+                setTimeout(() => {
+                  requestPlayerFullscreen(player);
+                }, 500);
+              });
+              
+            }, 800); // Wait for scroll animation
+            
+            console.log('Video loaded in banner player:', video.title);
+          } else {
+            console.warn('Video player not ready or no video source available');
+            if (attempts < 3) {
+              setTimeout(() => tryAccessPlayer(attempts + 1), 1000);
+            } else {
+              fallbackVideoPlay(video);
+            }
+          }
+        } catch (error) {
+          console.error('Error updating video banner:', error);
+          if (attempts < 3) {
+            setTimeout(() => tryAccessPlayer(attempts + 1), 1000);
+          } else {
+            fallbackVideoPlay(video);
+          }
+        }
+      }
+      
+      // Start trying to access the player
+      tryAccessPlayer();
+      
+    } else {
+      console.warn('No video banner section found on page');
+      fallbackVideoPlay(video);
+    }
+  }
+
+  // Helper function to request fullscreen
+  function requestPlayerFullscreen(player) {
+    try {
+      if (player.requestFullscreen) {
+        player.requestFullscreen();
+      } else if (player.el() && player.el().requestFullscreen) {
+        player.el().requestFullscreen();
+      } else if (player.el() && player.el().webkitRequestFullscreen) {
+        player.el().webkitRequestFullscreen();
+      } else if (player.el() && player.el().mozRequestFullScreen) {
+        player.el().mozRequestFullScreen();
+      } else if (player.el() && player.el().msRequestFullscreen) {
+        player.el().msRequestFullscreen();
+      } else {
+        console.warn('Fullscreen not supported');
+      }
+    } catch (error) {
+      console.error('Error requesting fullscreen:', error);
+    }
+  }
+  
+  // Fallback function for when video banner is not available
+  function fallbackVideoPlay(video) {
+    if (video.content && video.content.src) {
+      window.open(video.content.src, '_blank');
+    } else {
+      alert('Video source not available');
+    }
+  }
+
+  // Remove video from My Stuff
+  function removeFromMyStuff(videoId, videoTitle) {
+    if (confirm(`Remove "${videoTitle}" from My Stuff?`)) {
+      try {
+        let myStuff = JSON.parse(localStorage.getItem('myStuff') || '[]');
+        
+        // Filter out the video with the matching ID
+        myStuff = myStuff.filter(video => video.id !== videoId);
+        
+        // Save back to localStorage
+        localStorage.setItem('myStuff', JSON.stringify(myStuff));
+        
+        // Reload the display
+        loadMyStuff();
+        
+        // Dispatch custom event to update other My Stuff sections and video banners
+        window.dispatchEvent(new CustomEvent('myStuffUpdated'));
+        
+        console.log(`Removed "${videoTitle}" from My Stuff`);
+      } catch (error) {
+        console.error('Error removing from My Stuff:', error);
+        alert('Error removing video from My Stuff');
+      }
+    }
+  }
+
+  // Clear all My Stuff
+  if (clearButton) {
+    clearButton.addEventListener('click', function() {
+      if (confirm('Are you sure you want to clear all videos from My Stuff?')) {
+        localStorage.removeItem('myStuff');
+        loadMyStuff();
+      }
+    });
+  }
+
+  // Listen for storage changes (when videos are added from other sections)
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'myStuff') {
+      loadMyStuff();
+    }
+  });
+
+  // Custom event listener for same-page updates
+  window.addEventListener('myStuffUpdated', function() {
+    loadMyStuff();
+  });
+
+  // Initial load
+  loadMyStuff();
+
+  // Refresh every few seconds to catch changes from same page
+  setInterval(loadMyStuff, 2000);
+});
+</script>
+
+{% schema %}
+{
+  "name": "My Stuff",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "General Settings"
+    },
+    {
+      "type": "text",
+      "id": "section_title",
+      "label": "Section Title",
+      "default": "My Stuff"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Section Top Padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Section Bottom Padding",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "container_padding",
+      "min": 0,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Container Side Padding",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Title Settings"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "min": 18,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "label": "Title Font Size",
+      "default": 32
+    },
+    {
+      "type": "select",
+      "id": "title_font_weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi Bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "600",
+      "label": "Title Font Weight"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "select",
+      "id": "title_alignment",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "left",
+      "label": "Title Alignment"
+    },
+    {
+      "type": "range",
+      "id": "title_margin_bottom",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "label": "Title Bottom Margin",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Rail Settings"
+    },
+    {
+      "type": "range",
+      "id": "item_width",
+      "min": 120,
+      "max": 300,
+      "step": 10,
+      "unit": "px",
+      "label": "Desktop Item Width",
+      "default": 200
+    },
+    {
+      "type": "range",
+      "id": "mobile_item_width",
+      "min": 80,
+      "max": 200,
+      "step": 10,
+      "unit": "px",
+      "label": "Mobile Item Width",
+      "default": 140
+    },
+    {
+      "type": "range",
+      "id": "item_gap",
+      "min": 5,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "label": "Gap Between Items",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "rail_padding",
+      "min": 0,
+      "max": 30,
+      "step": 5,
+      "unit": "px",
+      "label": "Rail Vertical Padding",
+      "default": 10
+    },
+    {
+      "type": "range",
+      "id": "item_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "label": "Item Border Radius",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Item Text Settings"
+    },
+    {
+      "type": "range",
+      "id": "item_title_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Item Title Font Size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "item_meta_size",
+      "min": 10,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "label": "Item Meta Font Size",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Empty State Settings"
+    },
+    {
+      "type": "text",
+      "id": "empty_title",
+      "label": "Empty State Title",
+      "default": "Your collection is empty"
+    },
+    {
+      "type": "textarea",
+      "id": "empty_message",
+      "label": "Empty State Message",
+      "default": "Start adding videos to your collection by clicking the 'Add to My Stuff' button on videos you want to save."
+    },
+    {
+      "type": "color",
+      "id": "empty_text_color",
+      "label": "Empty State Text Color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "header",
+      "content": "Controls"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_clear_button",
+      "default": true,
+      "label": "Show Clear All Button"
+    },
+    {
+      "type": "color",
+      "id": "meta_text_color",
+      "label": "Meta Text Color",
+      "default": "#FFFFFF"
+    }
+  ],
+  "presets": [
+    {
+      "name": "My Stuff"
+    }
+  ]
+}
+{% endschema %} 
