@@ -27,6 +27,8 @@
     "@shopify/cli": "^3.74.1",
     "@shopify/hydrogen": "^2025.1.1",
     "@shopify/remix-oxygen": "^2.0.10",
+    "@types/video.js": "^7.3.58",
+    "@videojs/http-streaming": "^3.17.0",
     "clsx": "^1.2.1",
     "cross-env": "^7.0.3",
     "graphql": "^16.6.0",
@@ -38,7 +40,8 @@
     "react-use": "^17.4.0",
     "schema-dts": "^1.1.0",
     "tiny-invariant": "^1.2.0",
-    "typographic-base": "^1.0.4"
+    "typographic-base": "^1.0.4",
+    "video.js": "^8.23.3"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.2",
