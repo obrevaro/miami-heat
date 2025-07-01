@@ -266,27 +266,12 @@ document.addEventListener('DOMContentLoaded', function() {
       // Update count
       myStuffCount.textContent = `${myStuff.length} video${myStuff.length !== 1 ? 's' : ''}`;
 
-      // Get existing items to preserve DOM where possible
-      const existingItems = Array.from(myStuffRail.children);
-      const existingVideoIds = existingItems.map(item => item.dataset.videoId);
-      
-      // Clear rail for fresh render (this ensures proper order)
+      // Clear rail and create fresh elements to ensure proper event listeners
       myStuffRail.innerHTML = '';
 
       // Add items to rail
       myStuff.forEach((video, index) => {
-        // Try to reuse existing DOM element if video hasn't changed
-        const existingIndex = existingVideoIds.indexOf(video.id);
-        let item;
-        
-        if (existingIndex !== -1 && existingItems[existingIndex]) {
-          // Reuse existing element
-          item = existingItems[existingIndex];
-        } else {
-          // Create new element
-          item = createMyStuffItem(video, index);
-        }
-        
+        const item = createMyStuffItem(video, index);
         myStuffRail.appendChild(item);
       });
 
